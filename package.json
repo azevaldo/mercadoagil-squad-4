@@ -1,0 +1,22 @@
+{
+  "name": "mercadoagil-squad-4",
+  "version": "1.0.0",
+  "description": "MercadoÁgil — Projeto Final M1 Microsserviço de pedidos de marketplace, desenvolvido em squad como projeto final do Módulo 1. O sistema será implementado em JavaScript com Node.js e executado pelo terminal.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/azevaldo/mercadoagil-squad-4.git"
+  },
+  "keywords": [],
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/azevaldo/mercadoagil-squad-4/issues"
+  },
+  "homepage": "https://github.com/azevaldo/mercadoagil-squad-4#readme",
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}
