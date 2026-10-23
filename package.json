@@ -4,7 +4,7 @@
   "description": "MercadoÁgil — Projeto Final M1 Microsserviço de pedidos de marketplace, desenvolvido em squad como projeto final do Módulo 1. O sistema será implementado em JavaScript com Node.js e executado pelo terminal.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "repository": {
     "type": "git",
