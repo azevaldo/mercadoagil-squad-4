@@ -4,7 +4,11 @@
   "description": "MercadoÁgil — Projeto Final M1 Microsserviço de pedidos de marketplace, desenvolvido em squad como projeto final do Módulo 1. O sistema será implementado em JavaScript com Node.js e executado pelo terminal.",
   "main": "index.js",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.js\"",
+    "format:check": "prettier --check \"**/*.js\"",
+    "check": "npm run format:check && npm run lint"
   },
   "repository": {
     "type": "git",
@@ -18,5 +22,12 @@
   "homepage": "https://github.com/azevaldo/mercadoagil-squad-4#readme",
   "dependencies": {
     "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10"
   }
 }
