@@ -5,7 +5,7 @@ class Vendedor {
 
     constructor(nomeLoja, cnpj, email) {
         this.nomeLoja = nomeLoja; // Usa o setter para validar na criação
-        #cnpj = cnpj;             // Atribui diretamente pois não tem setter
+        this.#cnpj = cnpj;             // Atribui diretamente pois não tem setter
         this.email = email;       // Usa o setter para validar na criação
     }
 
