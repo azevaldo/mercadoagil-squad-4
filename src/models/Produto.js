@@ -7,7 +7,9 @@ export class Produto {
 
   constructor({ id, nome, preco, categoria, vendedor }) {
     if (!vendedor || typeof vendedor.nomeLoja !== 'string') {
-      throw new TypeError('O produto deve estar associado a um vendedor com nome de loja.');
+      throw new TypeError(
+        'O produto deve estar associado a um vendedor com nome de loja.',
+      );
     }
 
     this.#id = id;

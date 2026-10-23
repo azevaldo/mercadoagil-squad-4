@@ -24,12 +24,14 @@ const validarCnpj = (cnpj) => {
     return resto < 2 ? 0 : 11 - resto;
   };
 
-  const primeiroDigito = calcularDigito(digitos.slice(0, 12), [
-    5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2,
-  ]);
-  const segundoDigito = calcularDigito(digitos.slice(0, 12) + primeiroDigito, [
-    6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2,
-  ]);
+  const primeiroDigito = calcularDigito(
+    digitos.slice(0, 12),
+    [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+  );
+  const segundoDigito = calcularDigito(
+    digitos.slice(0, 12) + primeiroDigito,
+    [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+  );
 
   return digitos.endsWith(`${primeiroDigito}${segundoDigito}`);
 };
@@ -68,7 +70,10 @@ const quantidadeSchema = z.preprocess(
 );
 
 export const produtoSchema = z.object({
-  nome: z.string().trim().min(2, 'O nome do produto deve ter pelo menos 2 caracteres.'),
+  nome: z
+    .string()
+    .trim()
+    .min(2, 'O nome do produto deve ter pelo menos 2 caracteres.'),
   preco: precoSchema,
   categoria: z.enum(CATEGORIAS_PRODUTO, {
     error: 'A categoria informada não é válida.',
