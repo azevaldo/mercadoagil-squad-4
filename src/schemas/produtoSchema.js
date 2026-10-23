@@ -1,12 +1,7 @@
 import { z } from 'zod';
+import { CATEGORIAS_PRODUTO } from '../config/regras.js';
 
-export const CATEGORIAS_PRODUTO = Object.freeze([
-  'eletronicos',
-  'livros',
-  'alimentos',
-  'vestuario',
-  'casa',
-]);
+export { CATEGORIAS_PRODUTO };
 
 const normalizarCnpj = (cnpj) => cnpj.replace(/\D/g, '');
 
