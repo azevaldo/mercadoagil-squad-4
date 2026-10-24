@@ -252,12 +252,23 @@ export class Marketplace {
 
   listarCupons() {
     return sucesso(this.#cupons.map(paraCupom));
-  }
-
-  buscarCupom(codigo) {}
+  } 
 
   buscarCupom(codigo) {
-    
+    if (!codigo || String(codigo).trim() === '') {
+      return falha([
+        'Informe o código do cupom para realizar a busca.',
+      ]);
+    }
+
+    const codigoLimpo = String(codigo).trim().toUpperCase();
+    const cupom = this.#cupomPorCodigo(codigoLimpo);
+
+    if (!cupom) {
+      return falha(['Cupom não encontrado.']);
+    }
+
+    return sucesso(paraCupom(cupom));
   }
 
   atualizarCupom(codigo, novosDados) {
