@@ -77,6 +77,59 @@ test('retorna erro ao tentar atualizar cliente inexistente', () => {
   );
 });
 
+test('busca cliente por CPF sem expor o CPF no resultado', () => {
+  const marketplace = criarMarketplace();
+
+  assert.deepEqual(marketplace.buscarCliente('529.982.247-25'), {
+    ok: true,
+    dados: [
+      {
+        nome: 'Pedro Silva',
+        email: 'pedro@example.com',
+        regiaoEntrega: 'Nordeste',
+      },
+    ],
+  });
+});
+
+test('busca clientes por parte do nome sem diferenciar maiúsculas e acentos', () => {
+  const marketplace = new Marketplace({
+    clientes: [
+      { ...clienteInicial },
+      {
+        nome: 'João Souza',
+        email: 'maria@example.com',
+        cpf: '111.444.777-35',
+        regiaoEntrega: 'Sul',
+      },
+    ],
+  });
+
+  assert.deepEqual(marketplace.buscarCliente('joao'), {
+    ok: true,
+    dados: [
+      {
+        nome: 'João Souza',
+        email: 'maria@example.com',
+        regiaoEntrega: 'Sul',
+      },
+    ],
+  });
+});
+
+test('retorna erro quando a busca não encontra cliente ou está vazia', () => {
+  const marketplace = criarMarketplace();
+
+  assert.deepEqual(marketplace.buscarCliente('Pessoa inexistente'), {
+    ok: false,
+    erros: ['Cliente não encontrado.'],
+  });
+  assert.deepEqual(marketplace.buscarCliente('  '), {
+    ok: false,
+    erros: ['Informe um CPF ou nome para buscar.'],
+  });
+});
+
 test('exclui cliente existente usando CPF formatado', () => {
   const marketplace = criarMarketplace();
 
