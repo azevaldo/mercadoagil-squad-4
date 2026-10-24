@@ -137,7 +137,34 @@ export class Marketplace {
     return sucesso(paraCliente(cliente));
   }
 
-  buscarCliente(termo) {}
+  buscarCliente(termo) {
+    const busca = String(termo ?? '').trim();
+    if (!busca) return falha(['Informe um CPF ou nome para buscar.']);
+
+    const cpfNormalizado = busca.replace(/\D/g, '');
+    const nomeNormalizado = busca
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLocaleLowerCase('pt-BR');
+
+    const clientesEncontrados = this.#clientes.filter((cliente) => {
+      const nomeCliente = cliente.nome
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLocaleLowerCase('pt-BR');
+
+      return (
+        (cpfNormalizado.length === 11 && cliente.possuiCpf(cpfNormalizado)) ||
+        nomeCliente.includes(nomeNormalizado)
+      );
+    });
+
+    if (clientesEncontrados.length === 0) {
+      return falha(['Cliente não encontrado.']);
+    }
+
+    return sucesso(clientesEncontrados.map(paraCliente));
+  }
 
   excluirCliente(cpf) {
     const cliente = this.#clientePorCpf(cpf);
