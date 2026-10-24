@@ -3,19 +3,19 @@ export const clientes = [
     nome: 'Maria Santos',
     email: 'maria.santos@example.com',
     cpf: '529.982.247-25',
-    regiao: 'Nordeste',
+    regiaoEntrega: 'Nordeste',
   },
   {
     nome: 'Joao Lima',
     email: 'joao.lima@example.com',
     cpf: '111.444.777-35',
-    regiao: 'Sul',
+    regiaoEntrega: 'Sul',
   },
   {
     nome: 'Ana Costa',
     email: 'ana.costa@example.com',
     cpf: '123.456.789-09',
-    regiao: 'Sudeste',
+    regiaoEntrega: 'Sudeste',
   },
 ];
 
@@ -44,7 +44,7 @@ export const produtos = [
     preco: 120,
     categoria: 'eletronicos',
     quantidade: 10,
-    cnpjVendedor: '11.222.333/0001-81',
+    vendedorCnpj: '11.222.333/0001-81',
   },
   {
     id: 2,
@@ -52,7 +52,7 @@ export const produtos = [
     preco: 80,
     categoria: 'livros',
     quantidade: 8,
-    cnpjVendedor: '45.723.174/0001-10',
+    vendedorCnpj: '45.723.174/0001-10',
   },
   {
     id: 3,
@@ -60,7 +60,7 @@ export const produtos = [
     preco: 250,
     categoria: 'eletronicos',
     quantidade: 5,
-    cnpjVendedor: '11.222.333/0001-81',
+    vendedorCnpj: '11.222.333/0001-81',
   },
   {
     id: 4,
@@ -68,7 +68,7 @@ export const produtos = [
     preco: 180,
     categoria: 'eletronicos',
     quantidade: 7,
-    cnpjVendedor: '11.222.333/0001-81',
+    vendedorCnpj: '11.222.333/0001-81',
   },
   {
     id: 5,
@@ -76,7 +76,7 @@ export const produtos = [
     preco: 95,
     categoria: 'livros',
     quantidade: 6,
-    cnpjVendedor: '45.723.174/0001-10',
+    vendedorCnpj: '45.723.174/0001-10',
   },
   {
     id: 6,
@@ -84,7 +84,7 @@ export const produtos = [
     preco: 28,
     categoria: 'alimentos',
     quantidade: 20,
-    cnpjVendedor: '04.252.011/0001-10',
+    vendedorCnpj: '04.252.011/0001-10',
   },
   {
     id: 7,
@@ -92,7 +92,7 @@ export const produtos = [
     preco: 59.9,
     categoria: 'vestuario',
     quantidade: 12,
-    cnpjVendedor: '04.252.011/0001-10',
+    vendedorCnpj: '04.252.011/0001-10',
   },
   {
     id: 8,
@@ -100,7 +100,7 @@ export const produtos = [
     preco: 35,
     categoria: 'casa',
     quantidade: 15,
-    cnpjVendedor: '04.252.011/0001-10',
+    vendedorCnpj: '04.252.011/0001-10',
   },
 ];
 
@@ -113,6 +113,7 @@ export const cupons = [
     valorMinimo: 100,
     cumulativo: true,
   },
+ 
   {
     codigo: 'PDA15',
     tipo: 'fixo',
@@ -131,4 +132,4 @@ export const cupons = [
   },
 ];
 
-export const seed = { clientes, vendedores, produtos, cupons };
+export const dadosIniciais = { clientes, vendedores, produtos, cupons };

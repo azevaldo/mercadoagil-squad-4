@@ -1,12 +1,12 @@
-class Vendedor {
+export class Vendedor {
     #nomeLoja;
     #cnpj;
     #email;
 
-    constructor(nomeLoja, cnpj, email) {
-        this.nomeLoja = nomeLoja; // Usa o setter para validar na criação
+    constructor({nomeLoja, cnpj, email}) {
+        this.#nomeLoja = nomeLoja; // Usa o setter para validar na criação
         this.#cnpj = cnpj;             // Atribui diretamente pois não tem setter
-        this.email = email;       // Usa o setter para validar na criação
+        this.#email = email;       // Usa o setter para validar na criação
     }
 
     // --- Getters ---
@@ -23,7 +23,7 @@ class Vendedor {
     }
 
     // --- Setters com validação ---
-    set nomeLoja(novoNome) {
+    /*set nomeLoja(novoNome) {
         if (!novoNome || typeof novoNome !== 'string' || novoNome.trim() === '') {
             throw new Error("O nome da loja não pode ser vazio.");
         }
@@ -35,7 +35,7 @@ class Vendedor {
             throw new Error("E-mail inválido.");
         }
         this.#email = novoEmail.trim();
-    }
+    }*/
     // Nota: O CNPJ propositalmente não tem setter, conforme solicitado.
 
     // --- Método para resposta com CNPJ formatado ---
@@ -53,6 +53,9 @@ class Vendedor {
             email: this.#email
         };
     }
+    possuiCnpj(cnpj) {
+    return this.#cnpj === cnpj;
+  }
 }
 
-module.exports = Vendedor;
+

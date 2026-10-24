@@ -43,15 +43,4 @@ export const vendedorSchema = z.object({
   email: z.string().trim().email('Informe um e-mail válido.'),
 });
 
-export const validarVendedor = (entrada) => {
-  const resultado = vendedorSchema.safeParse(entrada);
 
-  if (!resultado.success) {
-    return {
-      ok: false,
-      erros: resultado.error.issues.map((erro) => erro.message),
-    };
-  }
-
-  return { ok: true, dados: resultado.data };
-};

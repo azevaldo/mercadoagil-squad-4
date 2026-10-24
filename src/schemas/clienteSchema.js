@@ -43,20 +43,8 @@ export const clienteSchema = z.object({
     .trim()
     .refine(validarCpf, 'Informe um CPF válido, com dígitos verificadores.')
     .transform(normalizarCpf),
-  regiao: z.enum(Object.keys(FRETE_POR_REGIAO), {
+  regiaoEntrega: z.enum(Object.keys(FRETE_POR_REGIAO), {
     error: 'Informe uma região válida para entrega.',
   }),
 });
 
-export const validarCliente = (entrada) => {
-  const resultado = clienteSchema.safeParse(entrada);
-
-  if (!resultado.success) {
-    return {
-      ok: false,
-      erros: resultado.error.issues.map((erro) => erro.message),
-    };
-  }
-
-  return { ok: true, dados: resultado.data };
-};

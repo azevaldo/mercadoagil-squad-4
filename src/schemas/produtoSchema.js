@@ -49,8 +49,8 @@ const precoSchema = z.preprocess(
   },
   z
     .number({ error: 'O preço deve ser numérico, como "120,50".' })
-    .finite('O preço deve ser um número finito.')
-    .positive('O preço deve ser maior que zero.'),
+    .positive('O preço deve ser maior que zero.')
+    .max(100000, 'O preço não pode passar de R$ 100.000,00.'),
 );
 
 const quantidadeSchema = z.preprocess(
@@ -64,52 +64,33 @@ const quantidadeSchema = z.preprocess(
   },
   z
     .number({ error: 'A quantidade deve ser um número inteiro não negativo.' })
-    .finite('A quantidade deve ser um número finito.')
     .int('A quantidade deve ser um número inteiro.')
     .nonnegative('A quantidade não pode ser negativa.'),
 );
 
 export const produtoSchema = z.object({
+  id: z.coerce
+    .number({ error: 'O id precisa ser um número.' })
+    .int('O id precisa ser um número inteiro.')
+    .positive('O id precisa ser maior que zero.'),
+
   nome: z
     .string()
     .trim()
-    .min(2, 'O nome do produto deve ter pelo menos 2 caracteres.'),
+    .min(2, 'O nome do produto deve ter pelo menos 2 caracteres.')
+    .max(100, 'O nome do produto não pode passar de 100 caracteres.'),
+
   preco: precoSchema,
+
   categoria: z.enum(CATEGORIAS_PRODUTO, {
     error: 'A categoria informada não é válida.',
   }),
+
   quantidade: quantidadeSchema,
-  cnpjVendedor: z
+
+  vendedorCnpj: z
     .string()
     .trim()
     .refine(validarCnpj, 'Informe um CNPJ válido, com dígitos verificadores.')
     .transform(normalizarCnpj),
 });
-
-export const validarProduto = (entrada, vendedores) => {
-  const resultado = produtoSchema.safeParse(entrada);
-
-  if (!resultado.success) {
-    return {
-      ok: false,
-      erros: resultado.error.issues.map((erro) => erro.message),
-    };
-  }
-
-  if (
-    vendedores !== undefined &&
-    (!Array.isArray(vendedores) ||
-      !vendedores.find(
-        (vendedor) =>
-          typeof vendedor?.cnpj === 'string' &&
-          normalizarCnpj(vendedor.cnpj) === resultado.data.cnpjVendedor,
-      ))
-  ) {
-    return {
-      ok: false,
-      erros: ['Não existe vendedor cadastrado com o CNPJ informado.'],
-    };
-  }
-
-  return { ok: true, dados: resultado.data };
-};
