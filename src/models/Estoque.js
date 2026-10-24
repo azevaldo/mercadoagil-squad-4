@@ -1,4 +1,4 @@
-import { sucesso,falha } from 'src/models/utils.js';
+import { sucesso,falha } from '../utils/extra.js';
 
 export class Estoque {
   #quantidades = new Map();
