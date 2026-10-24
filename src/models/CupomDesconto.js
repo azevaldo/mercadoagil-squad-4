@@ -48,4 +48,12 @@ export class CupomDesconto {
   atingeMinimo(subtotal) {
     return subtotal >= this.#valorMinimo;
   }
+
+  atualizar({ tipo, valor, validade, valorMinimo, cumulativo }) {
+    if (tipo !== undefined) this.#tipo = tipo;
+    if (valor !== undefined) this.#valor = valor;
+    if (validade !== undefined) this.#validade = new Date(validade);
+    if (valorMinimo !== undefined) this.#valorMinimo = valorMinimo;
+    if (cumulativo !== undefined) this.#cumulativo = cumulativo;
+  }
 }

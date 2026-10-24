@@ -217,12 +217,59 @@ export class Marketplace {
 
   buscarCupom(codigo) {
     
+  }
 
-}
+  atualizarCupom(codigo, novosDados) {
+    const codigoLimpo = String(codigo).trim().toUpperCase();
+    const cupom = this.#cupomPorCodigo(codigoLimpo);
+
+    if (!cupom) {
+      return falha(['Cupom não encontrado.']);
+    }
+
+    // o código não pode ser alterado
+    if (novosDados.codigo && String(novosDados.codigo).trim().toUpperCase() !== codigoLimpo) {
+      return falha(['O código do cupom não pode ser alterado.']);
+    }
+
+    // mesclar os dados atuais com as novas alterações mantendo o código
+    const dadosParaValidar = {
+      codigo: cupom.codigo,
+      tipo: novosDados.tipo ?? cupom.tipo,
+      valor: novosDados.valor ?? cupom.valor,
+      validade: novosDados.validade ?? cupom.validade,
+      valorMinimo: novosDados.valorMinimo ?? cupom.valorMinimo,
+      cumulativo: novosDados.cumulativo ?? cupom.cumulativo,
+    };
+
+    // validar com o Zod via função utilitária do sistema
+    const validado = validar(cupomSchema, dadosParaValidar);
+    if (!validado.ok) {
+      return validado;
+    }
+
+    const { tipo, valor, validade, valorMinimo, cumulativo } = validado.dados;
+    cupom.atualizar({ tipo, valor, validade, valorMinimo, cumulativo });
+
+    return sucesso(paraCupom(cupom));
+  }
 
   excluirCupom(codigo) {
+    const codigoLimpo = String(codigo).trim().toUpperCase();
+    const cupom = this.#cupomPorCodigo(codigoLimpo);
 
+    if (!cupom) {
+      return falha(['Cupom não encontrado.']);
+    }
 
+    this.#cupons = this.#cupons.filter(
+      (cupomAtual) => cupomAtual.codigo !== codigoLimpo,
+    );
+
+    return sucesso({
+      codigo: codigoLimpo,
+      mensagem: 'Cupom excluído com sucesso.',
+    });
   }
 
   // ---------- Relatórios ----------
