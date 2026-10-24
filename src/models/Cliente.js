@@ -1,5 +1,3 @@
-
-
 export class Cliente {
   #nome;
   #email;
@@ -15,7 +13,7 @@ export class Cliente {
 
   get nome() {
     return this.#nome;
-  } 
+  }
 
   get email() {
     return this.#email;
@@ -31,15 +29,18 @@ export class Cliente {
     return this.#cpf === cpf;
   }
 
+  atualizarDados({ nome, email, regiaoEntrega }) {
+    this.#nome = nome;
+    this.#email = email;
+    this.#regiaoEntrega = regiaoEntrega;
+  }
+
   // LGPD: o CPF é removido com rest antes de sair da classe
   dadosPublicos() {
-    const { cpf, ...dadosSeguros } = {
+    return {
       nome: this.#nome,
       email: this.#email,
-      cpf: this.#cpf,
-    
       regiaoEntrega: this.#regiaoEntrega,
     };
-    return dadosSeguros;
   }
 }

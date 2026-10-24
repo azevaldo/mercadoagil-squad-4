@@ -7,12 +7,13 @@ import { Estoque } from '../models/Estoque.js';
 import { sucesso, falha } from '../utils/extra.js';
 import { validar } from '../schemas/validar.js';
 
-import { clienteSchema } from '../schemas/clienteSchema.js';
+import {
+  atualizacaoClienteSchema,
+  clienteSchema,
+} from '../schemas/clienteSchema.js';
 import { vendedorSchema } from '../schemas/vendedorSchema.js';
 import { produtoSchema } from '../schemas/produtoSchema.js';
 import { cupomSchema } from '../schemas/cupomSchema.js';
-
-
 
 // Formatos de saída: nunca devolvem o CPF
 const paraCliente = (cliente) => cliente.dadosPublicos();
@@ -53,13 +54,18 @@ export class Marketplace {
 
   // Recebe os dados iniciais e cadastra cada item pelo mesmo método usado pelo menu.
   // A ordem importa: produto precisa do vendedor já cadastrado.
-  constructor({ vendedores = [], clientes = [], produtos = [], cupons = [] } = {}) {
+  constructor({
+    vendedores = [],
+    clientes = [],
+    produtos = [],
+    cupons = [],
+  } = {}) {
     const resultados = [
       ...vendedores.map((dados) => this.cadastrarVendedor(dados)),
       ...clientes.map((dados) => this.cadastrarCliente(dados)),
       ...produtos.map((dados) => this.cadastrarProduto(dados)),
       ...cupons.map((dados) => this.cadastrarCupom(dados)),
-    ]; 
+    ];
 
     // Construtor não devolve erro, então os problemas da carga ficam aqui
     this.#avisos = resultados
@@ -72,12 +78,11 @@ export class Marketplace {
     return [...this.#avisos];
   }
 
-
-
-// ---------- Buscas internas ----------
+  // ---------- Buscas internas ----------
 
   #clientePorCpf(cpf) {
-    return this.#clientes.find((cliente) => cliente.possuiCpf(cpf));
+    const cpfNormalizado = String(cpf).replace(/\D/g, '');
+    return this.#clientes.find((cliente) => cliente.possuiCpf(cpfNormalizado));
   }
 
   #vendedorPorCnpj(cnpj) {
@@ -92,7 +97,7 @@ export class Marketplace {
     const codigoLimpo = String(codigo).trim().toUpperCase();
     return this.#cupons.find((cupom) => cupom.codigo === codigoLimpo);
   }
-/*
+  /*
   #pedidoPorId(id) {
     return this.#pedidos.find((pedido) => pedido.id === Number(id));
   }
@@ -104,7 +109,7 @@ export class Marketplace {
 */
   // ---------- Clientes ----------
 
-    cadastrarCliente(dados) {
+  cadastrarCliente(dados) {
     const validado = validar(clienteSchema, dados);
     if (!validado.ok) return validado;
 
@@ -121,19 +126,59 @@ export class Marketplace {
     return sucesso(this.#clientes.map(paraCliente));
   }
 
-  buscarCliente(termo) {
+  atualizarCliente(cpf, dados) {
+    const cliente = this.#clientePorCpf(cpf);
+    if (!cliente) return falha(['Cliente não encontrado.']);
 
-}
+    const validado = validar(atualizacaoClienteSchema, dados);
+    if (!validado.ok) return validado;
+
+    cliente.atualizarDados(validado.dados);
+    return sucesso(paraCliente(cliente));
+  }
+
+  buscarCliente(termo) {
+    const busca = String(termo ?? '').trim();
+    if (!busca) return falha(['Informe um CPF ou nome para buscar.']);
+
+    const cpfNormalizado = busca.replace(/\D/g, '');
+    const nomeNormalizado = busca
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLocaleLowerCase('pt-BR');
+
+    const clientesEncontrados = this.#clientes.filter((cliente) => {
+      const nomeCliente = cliente.nome
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLocaleLowerCase('pt-BR');
+
+      return (
+        (cpfNormalizado.length === 11 && cliente.possuiCpf(cpfNormalizado)) ||
+        nomeCliente.includes(nomeNormalizado)
+      );
+    });
+
+    if (clientesEncontrados.length === 0) {
+      return falha(['Cliente não encontrado.']);
+    }
+
+    return sucesso(clientesEncontrados.map(paraCliente));
+  }
 
   excluirCliente(cpf) {
-  
+    const cliente = this.#clientePorCpf(cpf);
+    if (!cliente) return falha(['Cliente não encontrado.']);
 
+    // TODO: impedir a exclusão quando houver pedidos associados ao cliente.
+    this.#clientes = this.#clientes.filter((atual) => atual !== cliente);
 
+    return sucesso({ mensagem: 'Cliente excluído com sucesso.' });
   }
 
   // ---------- Vendedores ----------
 
- cadastrarVendedor(dados) {
+  cadastrarVendedor(dados) {
     const validado = validar(vendedorSchema, dados);
     if (!validado.ok) return validado;
 
@@ -150,18 +195,13 @@ export class Marketplace {
     return sucesso(this.#vendedores.map(paraVendedor));
   }
 
-  buscarVendedor(termo) {
+  buscarVendedor(termo) {}
 
-}
-
-  excluirVendedor(cnpj) {
-   
-
-  }
+  excluirVendedor(cnpj) {}
 
   // ---------- Produtos ----------
 
-   cadastrarProduto(dados) {
+  cadastrarProduto(dados) {
     const validado = validar(produtoSchema, dados);
     if (!validado.ok) return validado;
 
@@ -175,25 +215,23 @@ export class Marketplace {
       return falha([`Já existe um produto com o id ${dadosProduto.id}.`]);
     }
 
-//console.log(vendedor.nomeLoja);
+    //console.log(vendedor.nomeLoja);
     const produto = new Produto({ ...dadosProduto, vendedor });
     this.#produtos = [...this.#produtos, produto];
-   this.#estoque.cadastrar(produto, quantidade);
+    this.#estoque.cadastrar(produto, quantidade);
 
     return sucesso({ id: produto.id, nome: produto.nome });
   }
 
   listarProdutos() {
-    return sucesso(this.#produtos.map((produto) => paraProduto(produto, this.#estoque)));
+    return sucesso(
+      this.#produtos.map((produto) => paraProduto(produto, this.#estoque)),
+    );
   }
 
-  buscarProduto(termo) {
-    
-  }
+  buscarProduto(termo) {}
 
-  excluirProduto(id) {
-    
-  }
+  excluirProduto(id) {}
 
   // ---------- Cupons ----------
 
@@ -202,7 +240,9 @@ export class Marketplace {
     if (!validado.ok) return validado;
 
     if (this.#cupomPorCodigo(validado.dados.codigo)) {
-      return falha([`Já existe um cupom com o código ${validado.dados.codigo}.`]);
+      return falha([
+        `Já existe um cupom com o código ${validado.dados.codigo}.`,
+      ]);
     }
 
     const cupom = new CupomDesconto(validado.dados);
@@ -214,6 +254,7 @@ export class Marketplace {
     return sucesso(this.#cupons.map(paraCupom));
   }
 
+  buscarCupom(codigo) {}
 
   buscarCupom(codigo) {
     
@@ -274,7 +315,5 @@ export class Marketplace {
 
   // ---------- Relatórios ----------
 
-  relatorioFinanceiro() {
-
-}
+  relatorioFinanceiro() {}
 }

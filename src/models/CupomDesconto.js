@@ -6,7 +6,14 @@ export class CupomDesconto {
   #valorMinimo;
   #cumulativo;
 
-  constructor({ codigo, tipo, valor, validade, valorMinimo = 0, cumulativo = false }) {
+  constructor({
+    codigo,
+    tipo,
+    valor,
+    validade,
+    valorMinimo = 0,
+    cumulativo = false,
+  }) {
     this.#codigo = codigo;
     this.#tipo = tipo;
     this.#valor = valor;
