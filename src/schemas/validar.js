@@ -1,4 +1,4 @@
-import {sucesso,falha} from '../utils/extra.js'
+import { sucesso, falha } from '../utils/extra.js';
 /*
 export function validar(schema, dados) {
     const resultado = schema.safeParse(dados);
@@ -18,7 +18,7 @@ export function validar(schema, dados) {
     };
 }
 */
- 
+
 export const validar = (schema, dados) => {
   const resultado = schema.safeParse(dados);
   return resultado.success
