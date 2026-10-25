@@ -61,6 +61,18 @@ test('informa quando o produto não existe', () => {
   });
 });
 
+test('retorna falha quando o pedido não existe', () => {
+  const marketplace = criarMarketplace();
+
+  assert.deepEqual(
+    marketplace.adicionarItem(99, idDoProduto(marketplace), '1'),
+    {
+      ok: false,
+      erros: ['Pedido não encontrado.'],
+    },
+  );
+});
+
 test('adiciona produto ao pedido com quantidade válida', () => {
   const marketplace = criarMarketplace();
   const pedidoId = criarPedido(marketplace);
