@@ -20,7 +20,7 @@ export class Cliente {
   }
 
   // A região é calculada a partir da UF do cliente
-  get regiao() {
+  get regiaoEntrega() {
     return this.#regiaoEntrega;
   }
 
