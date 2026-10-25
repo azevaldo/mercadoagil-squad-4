@@ -103,7 +103,7 @@ export class Marketplace {
     const codigoLimpo = String(codigo).trim().toUpperCase();
     return this.#cupons.find((cupom) => cupom.codigo === codigoLimpo);
   }
-   #pedidoPorId(id) {
+  #pedidoPorId(id) {
     return this.#pedidos.find((pedido) => pedido.id === id);
   }
 
@@ -472,15 +472,15 @@ export class Marketplace {
 
   //----------Pedidos----------
 
-   removerItem(pedidoId, produtoId) {
-const validado=validar(pedidoIdSchema ,{pedidoId})
-      if (!validado.ok) return validado;
-   const validarId=validar(produtoIdSchema,{produtoId});
-   
-    if (!validarId.ok) return validarId;
-    
-      return this.#comPedido(pedidoId, (pedido) => {
-      const produto = this.#produtoPorId(produtoId);
+  removerItem(pedidoId, produtoId) {
+    const pedidoValidado = validar(pedidoIdSchema, { pedidoId });
+    if (!pedidoValidado.ok) return pedidoValidado;
+
+    const produtoValidado = validar(produtoIdSchema, { produtoId });
+    if (!produtoValidado.ok) return produtoValidado;
+
+    return this.#comPedido(pedidoValidado.dados.pedidoId, (pedido) => {
+      const produto = this.#produtoPorId(produtoValidado.dados.produtoId);
       if (!produto) return falha([`Produto ${produtoId} não encontrado.`]);
 
       return pedido.removerItem(produto.id);

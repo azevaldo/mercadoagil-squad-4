@@ -1,9 +1,10 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { Marketplace } from '../src/services/Marketplace.js';
+import { Marketplace } from '../src/services/MarketPlace.js';
 import { Pedido } from '../src/models/Pedido.js';
 import { Estoque } from '../src/models/Estoque.js';
 import { CupomDesconto } from '../src/models/CupomDesconto.js';
+import { pedidoIdSchema } from '../src/schemas/itemPedidoSchema.js';
 
 // Pedido ficticio completo: cliente do Nordeste, Mouse + Livro e cupom aplicado.
 // Os produtos e o cliente são objetos simples, como nos outros testes de pedido.
@@ -119,6 +120,13 @@ describe('Pedido ficticio completo: removerItem', () => {
 });
 
 describe('Marketplace: removerItem, pedido inexistente e id inválido', () => {
+  test('normaliza o id do pedido digitado como texto para número', () => {
+    const resultado = pedidoIdSchema.safeParse({ pedidoId: '1' });
+
+    assert.equal(resultado.success, true);
+    assert.equal(resultado.data.pedidoId, 1);
+  });
+
   test('pedido inexistente retorna falha', () => {
     const mp = new Marketplace();
 
