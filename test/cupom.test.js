@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CupomDesconto } from '../src/models/CupomDesconto.js';
-import { cupomSchema } from '../src/schemas/cupomSchema.js';
-import { Marketplace } from '../src/services/MarketPlace.js';
-import { validar } from '../src/schemas/validar.js';
+import { CupomDesconto } from '../models/CupomDesconto.js';
+import { cupomSchema } from '../schemas/cupomSchema.js';
+import { Marketplace } from '../services/MarketPlace.js';
+import { validar } from '../schemas/validar.js';
 
 // gerando data futura segura nos testes
 const criarDataFutura = (dias = 30) => {

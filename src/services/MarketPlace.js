@@ -218,7 +218,7 @@ export class Marketplace {
       return falha([`Já existe um produto com o id ${dadosProduto.id}.`]);
     }
 
-feature/produto_crud
+
 //console.log(vendedor.nomeLoja);
     const produto = new Produto({ id: this.#proximoProdutoId, ...dadosProduto, vendedor });
   this.#proximoProdutoId += 1;
