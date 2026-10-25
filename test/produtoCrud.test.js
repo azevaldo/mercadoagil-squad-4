@@ -1,9 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Marketplace } from '../src/services/Marketplace.js';
+import { Marketplace } from '../src/services/MarketPlace.js';
 
 const vendedores = [
-  { nomeLoja: 'TechBahia', cnpj: '11222333000181', email: 'contato@techbahia.com.br' },
+  {
+    nomeLoja: 'TechBahia',
+    cnpj: '11222333000181',
+    email: 'contato@techbahia.com.br',
+  },
 ];
 
 const produtoInicial = {
@@ -43,11 +47,14 @@ test('atualiza nome, preço e categoria e devolve o produto no formato da listag
   });
 });
 
- test('não altera o id nem o vendedor do produto', () => {
+test('não altera o id nem o vendedor do produto', () => {
   const mp = criarMarketplace();
   const id = idDoPrimeiro(mp);
 
-  const resposta = mp.atualizarProduto(id, { id: 99, vendedorCnpj: '45723174000110' });
+  const resposta = mp.atualizarProduto(id, {
+    id: 99,
+    vendedorCnpj: '45723174000110',
+  });
 
   assert.equal(resposta.ok, true);
   assert.equal(resposta.dados.id, id);
@@ -252,5 +259,3 @@ test('campo com só espaços mantém o valor atual', () => {
   assert.equal(resposta.dados.nome, 'Mouse');
   assert.equal(resposta.dados.preco, 120);
 });
-
-

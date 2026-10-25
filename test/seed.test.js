@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validarProduto } from '../src/schemas/produtoSchema.js';
+import { produtoSchema } from '../src/schemas/produtoSchema.js';
+import { validar } from '../src/schemas/validar.js';
 import {
   clientes,
   cupons,
+  dadosIniciais,
   produtos,
-  seed,
   vendedores,
 } from '../src/data/seed.js';
 
@@ -17,21 +18,29 @@ test('fornece as quantidades mínimas de dados exigidas pela rubrica', () => {
   assert.ok(produtos.length >= 8);
   assert.ok(categorias.size >= 3);
   assert.ok(cupons.length >= 3);
-  assert.deepEqual(seed, { clientes, vendedores, produtos, cupons });
+  assert.deepEqual(dadosIniciais, { clientes, vendedores, produtos, cupons });
 });
 
 test('produtos do seed passam pelo schema e referenciam vendedores cadastrados', () => {
-  const respostas = produtos.map((produto) =>
-    validarProduto(produto, vendedores),
+  const respostas = produtos.map((produto) => validar(produtoSchema, produto));
+  const cnpjsCadastrados = new Set(
+    vendedores.map(({ cnpj }) => cnpj.replace(/\D/g, '')),
   );
 
   assert.ok(respostas.every((resposta) => resposta.ok));
+  assert.ok(
+    produtos.every(({ vendedorCnpj }) =>
+      cnpjsCadastrados.has(vendedorCnpj.replace(/\D/g, '')),
+    ),
+  );
 });
 
 test('inclui os itens e vendedores do pedido de exemplo da rubrica', () => {
   const mouse = produtos.find(({ nome }) => nome === 'Mouse');
   const livro = produtos.find(({ nome }) => nome === 'Livro de JavaScript');
-  const clienteNordeste = clientes.find(({ regiao }) => regiao === 'Nordeste');
+  const clienteNordeste = clientes.find(
+    ({ regiaoEntrega }) => regiaoEntrega === 'Nordeste',
+  );
   const nomesLojas = vendedores.map(({ nomeLoja }) => nomeLoja);
 
   assert.ok(clienteNordeste);

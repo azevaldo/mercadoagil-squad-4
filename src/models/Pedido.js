@@ -14,9 +14,7 @@ const valorDoItem = ({ precoUnitario, quantidade }) =>
   precoUnitario * quantidade;
 
 const subtotalDe = (itens) =>
-  arredondarDinheiro(
-    itens.reduce((soma, item) => soma + valorDoItem(item), 0),
-  );
+  arredondarDinheiro(itens.reduce((soma, item) => soma + valorDoItem(item), 0));
 
 export class Pedido {
   #id;
@@ -67,7 +65,9 @@ export class Pedido {
     if (erroEdicao) return falha([erroEdicao]);
 
     if (!Number.isInteger(quantidade) || quantidade <= 0) {
-      return falha(['A quantidade precisa ser um número inteiro maior que zero.']);
+      return falha([
+        'A quantidade precisa ser um número inteiro maior que zero.',
+      ]);
     }
 
     const novosItens = this.contemProduto(produto.id)
@@ -76,10 +76,7 @@ export class Pedido {
             ? { ...item, quantidade: item.quantidade + quantidade }
             : item,
         )
-      : [
-          ...this.#itens,
-          { produto, quantidade, precoUnitario: produto.preco },
-        ];
+      : [...this.#itens, { produto, quantidade, precoUnitario: produto.preco }];
 
     return this.#trocarItens(novosItens);
   }
@@ -147,7 +144,11 @@ export class Pedido {
     this.#status = 'confirmado';
     this.#calculoFinal = this.#calcular();
 
-    return sucesso({ id: this.#id, status: this.#status, total: this.#calculoFinal.total });
+    return sucesso({
+      id: this.#id,
+      status: this.#status,
+      total: this.#calculoFinal.total,
+    });
   }
 
   cancelar(estoque) {
@@ -193,7 +194,9 @@ export class Pedido {
 
     const codigos = lista.map((cupom) => cupom.codigo);
     const repetidos = [
-      ...new Set(codigos.filter((codigo, indice) => codigos.indexOf(codigo) !== indice)),
+      ...new Set(
+        codigos.filter((codigo, indice) => codigos.indexOf(codigo) !== indice),
+      ),
     ];
     const naoCumulativo = lista.find((cupom) => !cupom.cumulativo);
 
@@ -208,28 +211,41 @@ export class Pedido {
 
     const erroCumulativo =
       lista.length > 1 && naoCumulativo
-        ? [`O cupom ${naoCumulativo.codigo} não é cumulativo e só pode ser usado sozinho.`]
+        ? [
+            `O cupom ${naoCumulativo.codigo} não é cumulativo e só pode ser usado sozinho.`,
+          ]
         : [];
 
     const errosPorCupom = lista.flatMap((cupom) => [
       ...(cupom.estaValido() ? [] : [`O cupom ${cupom.codigo} está vencido.`]),
       ...(cupom.atingeMinimo(subtotal)
         ? []
-        : [`O cupom ${cupom.codigo} exige subtotal mínimo de ${formatarReais(cupom.valorMinimo)}.`]),
+        : [
+            `O cupom ${cupom.codigo} exige subtotal mínimo de ${formatarReais(cupom.valorMinimo)}.`,
+          ]),
     ]);
 
-    return [...erroLimite, ...erroRepetido, ...erroCumulativo, ...errosPorCupom];
+    return [
+      ...erroLimite,
+      ...erroRepetido,
+      ...erroCumulativo,
+      ...errosPorCupom,
+    ];
   }
 
   #calcular() {
     const subtotal = subtotalDe(this.#itens);
-    const unidades = this.#itens.reduce((soma, { quantidade }) => soma + quantidade, 0);
+    const unidades = this.#itens.reduce(
+      (soma, { quantidade }) => soma + quantidade,
+      0,
+    );
 
     // 1) Percentuais, em sequência sobre o restante
     const aposPercentuais = this.#cupons
       .filter((cupom) => cupom.tipo === 'percentual')
       .reduce(
-        (restante, cupom) => arredondarDinheiro(restante * (1 - cupom.valor / 100)),
+        (restante, cupom) =>
+          arredondarDinheiro(restante * (1 - cupom.valor / 100)),
         subtotal,
       );
 
@@ -237,7 +253,8 @@ export class Pedido {
     const aposFixos = this.#cupons
       .filter((cupom) => cupom.tipo === 'fixo')
       .reduce(
-        (restante, cupom) => Math.max(0, arredondarDinheiro(restante - cupom.valor)),
+        (restante, cupom) =>
+          Math.max(0, arredondarDinheiro(restante - cupom.valor)),
         aposPercentuais,
       );
 
@@ -254,7 +271,8 @@ export class Pedido {
     const frete = freteGratis
       ? 0
       : arredondarDinheiro(
-          FRETE_POR_REGIAO[this.#cliente.regiaoEntrega] + unidades * FRETE_POR_UNIDADE,
+          FRETE_POR_REGIAO[this.#cliente.regiaoEntrega] +
+            unidades * FRETE_POR_UNIDADE,
         );
 
     const total = arredondarDinheiro(Math.max(0, valorComDescontos + frete));
@@ -271,9 +289,14 @@ export class Pedido {
       };
     });
 
-    const soma = (valores) => valores.reduce((acumulado, valor) => acumulado + valor, 0);
-    const tributos = arredondarDinheiro(soma(linhas.map((linha) => linha.tributo)));
-    const comissao = arredondarDinheiro(soma(linhas.map((linha) => linha.comissao)));
+    const soma = (valores) =>
+      valores.reduce((acumulado, valor) => acumulado + valor, 0);
+    const tributos = arredondarDinheiro(
+      soma(linhas.map((linha) => linha.tributo)),
+    );
+    const comissao = arredondarDinheiro(
+      soma(linhas.map((linha) => linha.comissao)),
+    );
 
     // Repasse por vendedor: valor bruto dos itens dele menos a comissão desses itens
     const porVendedor = linhas.reduce((acumulado, linha) => {
