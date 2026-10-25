@@ -11,7 +11,10 @@ import {
   atualizacaoClienteSchema,
   clienteSchema,
 } from '../schemas/clienteSchema.js';
-import { vendedorSchema } from '../schemas/vendedorSchema.js';
+import {
+  atualizacaoVendedorSchema,
+  vendedorSchema,
+} from '../schemas/vendedorSchema.js';
 import { produtoSchema } from '../schemas/produtoSchema.js';
 import { cupomSchema } from '../schemas/cupomSchema.js';
 
@@ -47,7 +50,7 @@ export class Marketplace {
   #vendedores = [];
   #produtos = [];
   #cupons = [];
- #proximoProdutoId = 1;
+  #proximoProdutoId = 1;
   //#pedidos = [];
   #estoque = new Estoque();
   #proximoPedidoId = 1;
@@ -196,9 +199,66 @@ export class Marketplace {
     return sucesso(this.#vendedores.map(paraVendedor));
   }
 
-  buscarVendedor(termo) {}
+  atualizarVendedor(cnpj, dados) {
+    const cnpjNormalizado = String(cnpj ?? '').replace(/\D/g, '');
+    const vendedor = this.#vendedorPorCnpj(cnpjNormalizado);
 
-  excluirVendedor(cnpj) {}
+    if (!vendedor) return falha(['Vendedor não encontrado.']);
+
+    const validado = validar(atualizacaoVendedorSchema, dados);
+    if (!validado.ok) return validado;
+
+    vendedor.atualizarDados(validado.dados);
+    return sucesso(paraVendedor(vendedor));
+  }
+
+  buscarVendedor(termo) {
+    const busca = String(termo ?? '').trim();
+    if (!busca) return falha(['Informe um CNPJ ou nome para buscar.']);
+
+    const cnpj = busca.replace(/\D/g, '');
+    const nomeBusca = busca
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLocaleLowerCase('pt-BR');
+
+    const encontrados = this.#vendedores.filter((vendedor) => {
+      const nome = vendedor.nomeLoja
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLocaleLowerCase('pt-BR');
+
+      return (
+        (cnpj.length === 14 && vendedor.possuiCnpj(cnpj)) ||
+        nome.includes(nomeBusca)
+      );
+    });
+
+    return encontrados.length
+      ? sucesso(encontrados.map(paraVendedor))
+      : falha(['Vendedor não encontrado.']);
+  }
+
+  excluirVendedor(cnpj) {
+    const cnpjNormalizado = String(cnpj ?? '').replace(/\D/g, '');
+    const vendedor = this.#vendedorPorCnpj(cnpjNormalizado);
+
+    if (!vendedor) return falha(['Vendedor não encontrado.']);
+
+    const possuiProdutos = this.#produtos.some(
+      (produto) => produto.vendedor.cnpj === vendedor.cnpj,
+    );
+
+    if (possuiProdutos) {
+      return falha([
+        'Este vendedor possui produtos cadastrados e não pode ser excluído.',
+      ]);
+    }
+
+    this.#vendedores = this.#vendedores.filter((atual) => atual !== vendedor);
+
+    return sucesso({ mensagem: 'Vendedor excluído com sucesso.' });
+  }
 
   // ---------- Produtos ----------
 
@@ -206,8 +266,6 @@ export class Marketplace {
     const validado = validar(produtoSchema, dados);
     if (!validado.ok) return validado;
 
-    
-    
     // Estoque e CNPJ não fazem parte do produto
     const { quantidade, vendedorCnpj, ...dadosProduto } = validado.dados;
 
@@ -218,12 +276,15 @@ export class Marketplace {
       return falha([`Já existe um produto com o id ${dadosProduto.id}.`]);
     }
 
-
-//console.log(vendedor.nomeLoja);
-    const produto = new Produto({ id: this.#proximoProdutoId, ...dadosProduto, vendedor });
-  this.#proximoProdutoId += 1;
-  this.#produtos = [...this.#produtos, produto];
-  this.#estoque.cadastrar(produto, quantidade);
+    //console.log(vendedor.nomeLoja);
+    const produto = new Produto({
+      id: this.#proximoProdutoId,
+      ...dadosProduto,
+      vendedor,
+    });
+    this.#proximoProdutoId += 1;
+    this.#produtos = [...this.#produtos, produto];
+    this.#estoque.cadastrar(produto, quantidade);
 
     return sucesso({ id: produto.id, nome: produto.nome });
   }
@@ -233,37 +294,41 @@ export class Marketplace {
       this.#produtos.map((produto) => paraProduto(produto, this.#estoque)),
     );
   }
- atualizarProduto(id, dados) {
-  const produto = this.#produtoPorId(id);
-  if (!produto) return falha(['Produto não encontrado.']);
+  atualizarProduto(id, dados) {
+    const produto = this.#produtoPorId(id);
+    if (!produto) return falha(['Produto não encontrado.']);
 
-  // Campo não informado, vazio ou só com espaços mantém o valor atual
-  const informado = (valor) =>
-    valor !== undefined && !(typeof valor === 'string' && valor.trim() === '');
+    // Campo não informado, vazio ou só com espaços mantém o valor atual
+    const informado = (valor) =>
+      valor !== undefined &&
+      !(typeof valor === 'string' && valor.trim() === '');
 
-  const manter = (campo, atual) => (informado(dados[campo]) ? dados[campo] : atual);
+    const manter = (campo, atual) =>
+      informado(dados[campo]) ? dados[campo] : atual;
 
-  const validado = validar(produtoSchema, {
-    nome: manter('nome', produto.nome),
-    preco: manter('preco', produto.preco),
-    categoria: manter('categoria', produto.categoria),
-    quantidade: manter('quantidade', this.#estoque.disponivel(produto.id)),
-    vendedorCnpj: produto.vendedor.cnpj,
-  });
-  if (!validado.ok) return validado;
+    const validado = validar(produtoSchema, {
+      nome: manter('nome', produto.nome),
+      preco: manter('preco', produto.preco),
+      categoria: manter('categoria', produto.categoria),
+      quantidade: manter('quantidade', this.#estoque.disponivel(produto.id)),
+      vendedorCnpj: produto.vendedor.cnpj,
+    });
+    if (!validado.ok) return validado;
 
-  const { nome, preco, categoria, quantidade } = validado.dados;
-  produto.atualizar({ nome, preco, categoria });
-  this.#estoque.cadastrar(produto, quantidade);
+    const { nome, preco, categoria, quantidade } = validado.dados;
+    produto.atualizar({ nome, preco, categoria });
+    this.#estoque.cadastrar(produto, quantidade);
 
-  return sucesso(paraProduto(produto, this.#estoque));
-}
+    return sucesso(paraProduto(produto, this.#estoque));
+  }
   buscarProduto(termo) {
     const texto = String(termo).trim();
 
     const produto =
       this.#produtoPorId(texto) ??
-      this.#produtos.find((p) => p.nome.toLowerCase().includes(texto.toLowerCase()));
+      this.#produtos.find((p) =>
+        p.nome.toLowerCase().includes(texto.toLowerCase()),
+      );
 
     return produto
       ? sucesso(paraProduto(produto, this.#estoque))
@@ -274,7 +339,7 @@ export class Marketplace {
     const produto = this.#produtoPorId(id);
     if (!produto) return falha(['Produto não encontrado.']);
 
-   /* if (this.#pedidos.some((pedido) => pedido.status === 'aberto' && pedido.contemProduto(produto.id))) {
+    /* if (this.#pedidos.some((pedido) => pedido.status === 'aberto' && pedido.contemProduto(produto.id))) {
       return falha(['Este produto está em um pedido aberto. Remova-o do pedido antes de excluir.']);
     }*/
 
@@ -302,13 +367,11 @@ export class Marketplace {
 
   listarCupons() {
     return sucesso(this.#cupons.map(paraCupom));
-  } 
+  }
 
   buscarCupom(codigo) {
     if (!codigo || String(codigo).trim() === '') {
-      return falha([
-        'Informe o código do cupom para realizar a busca.',
-      ]);
+      return falha(['Informe o código do cupom para realizar a busca.']);
     }
 
     const codigoLimpo = String(codigo).trim().toUpperCase();
@@ -330,7 +393,10 @@ export class Marketplace {
     }
 
     // o código não pode ser alterado
-    if (novosDados.codigo && String(novosDados.codigo).trim().toUpperCase() !== codigoLimpo) {
+    if (
+      novosDados.codigo &&
+      String(novosDados.codigo).trim().toUpperCase() !== codigoLimpo
+    ) {
       return falha(['O código do cupom não pode ser alterado.']);
     }
 

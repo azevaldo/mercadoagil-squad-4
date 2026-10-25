@@ -52,84 +52,177 @@ export const iniciarMenu = async (mp) => {
       async () => mostrar(mp.excluirCliente(await perguntar('CPF'))),
     ],
 
-    6: ['Cadastrar vendedor', async () => mostrar(mp.cadastrarVendedor({
-      nome: await perguntar('Nome da loja'),
-      cnpj: await perguntar('CNPJ'),
-      email: await perguntar('E-mail'),
-    }))],
+    6: [
+      'Cadastrar vendedor',
+      async () =>
+        mostrar(
+          mp.cadastrarVendedor({
+            nomeLoja: await perguntar('Nome da loja'),
+            cnpj: await perguntar('CNPJ'),
+            email: await perguntar('E-mail'),
+          }),
+        ),
+    ],
     7: ['Listar vendedores', () => mostrar(mp.listarVendedores())],
-    8: ['Buscar vendedor', async () => mostrar(mp.buscarVendedor(await perguntar('CNPJ ou nome')))],
-    9: ['Excluir vendedor', async () => mostrar(mp.excluirVendedor(await perguntar('CNPJ')))],
-    
+    8: [
+      'Buscar vendedor',
+      async () => mostrar(mp.buscarVendedor(await perguntar('CNPJ ou nome'))),
+    ],
+    9: [
+      'Atualizar vendedor',
+      async () =>
+        mostrar(
+          mp.atualizarVendedor(await perguntar('CNPJ do vendedor'), {
+            nomeLoja: await perguntar('Novo nome da loja'),
+            email: await perguntar('Novo e-mail'),
+          }),
+        ),
+    ],
+    10: [
+      'Excluir vendedor',
+      async () => mostrar(mp.excluirVendedor(await perguntar('CNPJ'))),
+    ],
 
-    10: ['Cadastrar produto', async () => mostrar(mp.cadastrarProduto({
-     
-      nome: await perguntar('Nome'),
-      preco: await perguntar('Preço (ex.: 120,50)'),
-      categoria: await perguntar('Categoria (eletronicos, livros, alimentos, vestuario, casa)'),
-      vendedorCnpj: await perguntar('CNPJ do vendedor'),
-      quantidade: await perguntar('Quantidade em estoque'),
-    }))],
-    11: ['Listar produtos', () => mostrar(mp.listarProdutos())],
-    12: ['Atualizar produto', async () => mostrar(mp.atualizarProduto(
-        await perguntar('Id do produto'),
-  {
-    nome: await perguntar('Novo nome (Enter para manter)'),
-    preco: await perguntar('Novo preço (Enter para manter)'),
-    categoria: await perguntar('Nova categoria (Enter para manter)'),
-    quantidade: await perguntar('Nova quantidade (Enter para manter)'),
-  },
-))],
-    13: ['Buscar produto', async () => mostrar(mp.buscarProduto(await perguntar('Id ou nome')))],
-    14: ['Excluir produto', async () => mostrar(mp.excluirProduto(await perguntar('Id')))],
+    11: [
+      'Cadastrar produto',
+      async () =>
+        mostrar(
+          mp.cadastrarProduto({
+            nome: await perguntar('Nome'),
+            preco: await perguntar('Preço (ex.: 120,50)'),
+            categoria: await perguntar(
+              'Categoria (eletronicos, livros, alimentos, vestuario, casa)',
+            ),
+            vendedorCnpj: await perguntar('CNPJ do vendedor'),
+            quantidade: await perguntar('Quantidade em estoque'),
+          }),
+        ),
+    ],
+    12: ['Listar produtos', () => mostrar(mp.listarProdutos())],
+    13: [
+      'Atualizar produto',
+      async () =>
+        mostrar(
+          mp.atualizarProduto(await perguntar('Id do produto'), {
+            nome: await perguntar('Novo nome (Enter para manter)'),
+            preco: await perguntar('Novo preço (Enter para manter)'),
+            categoria: await perguntar('Nova categoria (Enter para manter)'),
+            quantidade: await perguntar('Nova quantidade (Enter para manter)'),
+          }),
+        ),
+    ],
+    14: [
+      'Buscar produto',
+      async () => mostrar(mp.buscarProduto(await perguntar('Id ou nome'))),
+    ],
+    15: [
+      'Excluir produto',
+      async () => mostrar(mp.excluirProduto(await perguntar('Id'))),
+    ],
 
-    15: ['Cadastrar cupom', async () => mostrar(mp.cadastrarCupom({
-      codigo: await perguntar('Código'),
-      tipo: await perguntar('Tipo (percentual, fixo, frete)'),
-      valor: await perguntar('Valor'),
-      validade: await perguntar('Validade (AAAA-MM-DD)'),
-      valorMinimo: await perguntar('Valor mínimo do subtotal (Enter para 0)'),
-      cumulativo: (await perguntar('Cumulativo? (s/n)')).trim().toLowerCase() === 's',
-    }))],
-    16: ['Listar cupons', () => mostrar(mp.listarCupons())],
+    16: [
+      'Cadastrar cupom',
+      async () =>
+        mostrar(
+          mp.cadastrarCupom({
+            codigo: await perguntar('Código'),
+            tipo: await perguntar('Tipo (percentual, fixo, frete)'),
+            valor: await perguntar('Valor'),
+            validade: await perguntar('Validade (AAAA-MM-DD)'),
+            valorMinimo: await perguntar(
+              'Valor mínimo do subtotal (Enter para 0)',
+            ),
+            cumulativo:
+              (await perguntar('Cumulativo? (s/n)')).trim().toLowerCase() ===
+              's',
+          }),
+        ),
+    ],
+    17: ['Listar cupons', () => mostrar(mp.listarCupons())],
 
-    17: ['Buscar cupom', async () => mostrar(mp.buscarCupom(await perguntar('Código do cupom para buscar')))],
-    18: ['Atualizar cupom', async () => mostrar(mp.atualizarCupom(
-      await perguntar('Código do cupom para atualizar'),
-      {
-        tipo: (await perguntar('Novo tipo (percentual, fixo, frete)')).trim() || undefined,
-        valor: (await perguntar('Novo valor')).trim() || undefined,
-        validade: (await perguntar('Nova validade AAAA-MM-DD')).trim() || undefined,
-        valorMinimo: (await perguntar('Novo valor mínimo')).trim() || undefined,
-        cumulativo: (await perguntar('Cumulativo? (s/n)')).trim()
-          ? (await perguntar('Cumulativo? (s/n)')).trim().toLowerCase() === 's'
-          : undefined,
-    }))],
-    19: ['Excluir cupom', async () => mostrar(mp.excluirCupom(await perguntar('Código')))],
+    18: [
+      'Buscar cupom',
+      async () =>
+        mostrar(mp.buscarCupom(await perguntar('Código do cupom para buscar'))),
+    ],
+    19: [
+      'Atualizar cupom',
+      async () =>
+        mostrar(
+          mp.atualizarCupom(await perguntar('Código do cupom para atualizar'), {
+            tipo:
+              (await perguntar('Novo tipo (percentual, fixo, frete)')).trim() ||
+              undefined,
+            valor: (await perguntar('Novo valor')).trim() || undefined,
+            validade:
+              (await perguntar('Nova validade AAAA-MM-DD')).trim() || undefined,
+            valorMinimo:
+              (await perguntar('Novo valor mínimo')).trim() || undefined,
+            cumulativo: (await perguntar('Cumulativo? (s/n)')).trim()
+              ? (await perguntar('Cumulativo? (s/n)')).trim().toLowerCase() ===
+                's'
+              : undefined,
+          }),
+        ),
+    ],
+    20: [
+      'Excluir cupom',
+      async () => mostrar(mp.excluirCupom(await perguntar('Código'))),
+    ],
 
-    20: ['Novo pedido', async () => mostrar(mp.criarPedido(await perguntar('CPF do cliente')))],
-    21: ['Adicionar item ao pedido', async () => mostrar(mp.adicionarItem(
+    21: [
+      'Novo pedido',
+      async () => mostrar(mp.criarPedido(await perguntar('CPF do cliente'))),
+    ],
+    22: [
+      'Adicionar item ao pedido',
+      async () =>
+        mostrar(
+          mp.adicionarItem(
+            await perguntar('Número do pedido'),
+            await perguntar('Id do produto'),
+            await perguntar('Quantidade'),
+          ),
+        ),
+    ],
 
-      await perguntar('Número do pedido'),
-      await perguntar('Id do produto'),
-      await perguntar('Quantidade'),
-    ))],
+    23: [
+      'Remover item do pedido',
+      async () =>
+        mostrar(
+          mp.removerItem(
+            await perguntar('Número do pedido'),
+            await perguntar('Id do produto'),
+          ),
+        ),
+    ],
+    24: [
+      'Aplicar cupom ao pedido',
+      async () =>
+        mostrar(
+          mp.aplicarCupom(
+            await perguntar('Número do pedido'),
+            await perguntar('Código do cupom'),
+          ),
+        ),
+    ],
+    25: [
+      'Ver resumo do pedido',
+      async () => mostrar(mp.resumoPedido(await perguntar('Número do pedido'))),
+    ],
+    26: [
+      'Confirmar pedido',
+      async () =>
+        mostrar(mp.confirmarPedido(await perguntar('Número do pedido'))),
+    ],
+    27: [
+      'Cancelar pedido',
+      async () =>
+        mostrar(mp.cancelarPedido(await perguntar('Número do pedido'))),
+    ],
+    28: ['Listar pedidos', () => mostrar(mp.listarPedidos())],
 
-    21: ['Remover item do pedido', async () => mostrar(mp.removerItem(
-      await perguntar('Número do pedido'),
-      await perguntar('Id do produto'),
-    ))],
-    22: ['Aplicar cupom ao pedido', async () => mostrar(mp.aplicarCupom(
-      await perguntar('Número do pedido'),
-      await perguntar('Código do cupom'),
-    ))],
-    23: ['Ver resumo do pedido', async () => mostrar(mp.resumoPedido(await perguntar('Número do pedido')))],
-    24: ['Confirmar pedido', async () => mostrar(mp.confirmarPedido(await perguntar('Número do pedido')))],
-    25: ['Cancelar pedido', async () => mostrar(mp.cancelarPedido(await perguntar('Número do pedido')))],
-    26: ['Listar pedidos', () => mostrar(mp.listarPedidos())],
-
-    27: ['Relatório financeiro', () => mostrar(mp.relatorioFinanceiro())],
-
+    29: ['Relatório financeiro', () => mostrar(mp.relatorioFinanceiro())],
   };
 
   const mostrarMenu = () => {
