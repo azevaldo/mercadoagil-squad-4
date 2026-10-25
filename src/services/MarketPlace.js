@@ -16,8 +16,9 @@ import {
   atualizacaoVendedorSchema,
   vendedorSchema,
 } from '../schemas/vendedorSchema.js';
-import { produtoSchema } from '../schemas/produtoSchema.js';
+import { produtoSchema, produtoIdSchema } from '../schemas/produtoSchema.js';
 import { cupomSchema } from '../schemas/cupomSchema.js';
+import { itemPedidoSchema, pedidoIdSchema } from '../schemas/itemPedidoSchema.js';
 
 // Formatos de saída: nunca devolvem o CPF
 const paraCliente = (cliente) => cliente.dadosPublicos();
@@ -101,6 +102,15 @@ export class Marketplace {
   #cupomPorCodigo(codigo) {
     const codigoLimpo = String(codigo).trim().toUpperCase();
     return this.#cupons.find((cupom) => cupom.codigo === codigoLimpo);
+  }
+   #pedidoPorId(id) {
+    return this.#pedidos.find((pedido) => pedido.id === id);
+  }
+
+    // Executa a ação só se o pedido existir
+  #comPedido(id, acao) {
+    const pedido = this.#pedidoPorId(id);
+    return pedido ? acao(pedido) : falha([`Pedido ${id} não encontrado.`]);
   }
   /*
   #pedidoPorId(id) {
@@ -457,6 +467,23 @@ export class Marketplace {
       id: pedido.id,
       cliente: cliente.nome,
       status: pedido.status,
+    });
+  }
+
+  //----------Pedidos----------
+
+   removerItem(pedidoId, produtoId) {
+const validado=validar(pedidoIdSchema ,{pedidoId})
+      if (!validado.ok) return validado;
+   const validarId=validar(produtoIdSchema,{produtoId});
+   
+    if (!validarId.ok) return validarId;
+    
+      return this.#comPedido(pedidoId, (pedido) => {
+      const produto = this.#produtoPorId(produtoId);
+      if (!produto) return falha([`Produto ${produtoId} não encontrado.`]);
+
+      return pedido.removerItem(produto.id);
     });
   }
 

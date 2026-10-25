@@ -94,3 +94,23 @@ export const produtoSchema = z.object({
     .refine(validarCnpj, 'Informe um CNPJ válido, com dígitos verificadores.')
     .transform(normalizarCnpj),
 });
+
+// Id do produto chega como texto da CLI ou como número: só aceita inteiro maior que zero
+const idProdutoSchema = z.preprocess(
+  (id) => {
+    if (typeof id === 'number') return id;
+    if (typeof id !== 'string' || !/^\d+$/.test(id.trim())) {
+      return Number.NaN;
+    }
+
+    return Number(id.trim());
+  },
+  z
+    .number({ error: 'O id do produto deve ser um número inteiro maior que zero.' })
+    .int('O id do produto deve ser um número inteiro.')
+    .positive('O id do produto deve ser maior que zero.'),
+);
+
+export const produtoIdSchema = z.object({
+  produtoId: idProdutoSchema,
+});
