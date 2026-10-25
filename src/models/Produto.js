@@ -32,7 +32,11 @@ export class Produto {
   get vendedor() {
     return this.#vendedor;
   }
-
+atualizar({ nome, preco, categoria }) {
+  this.#nome = nome;
+  this.#preco = preco;
+  this.#categoria = categoria;
+}
   toJSON() {
     return {
       id: this.#id,

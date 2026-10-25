@@ -52,54 +52,38 @@ export const iniciarMenu = async (mp) => {
       async () => mostrar(mp.excluirCliente(await perguntar('CPF'))),
     ],
 
-    6: [
-      'Cadastrar vendedor',
-      async () =>
-        mostrar(
-          mp.cadastrarVendedor({
-            nome: await perguntar('Nome da loja'),
-            cnpj: await perguntar('CNPJ'),
-            email: await perguntar('E-mail'),
-          }),
-        ),
-    ],
+    6: ['Cadastrar vendedor', async () => mostrar(mp.cadastrarVendedor({
+      nome: await perguntar('Nome da loja'),
+      cnpj: await perguntar('CNPJ'),
+      email: await perguntar('E-mail'),
+    }))],
     7: ['Listar vendedores', () => mostrar(mp.listarVendedores())],
-    8: [
-      'Buscar vendedor',
-      async () => mostrar(mp.buscarVendedor(await perguntar('CNPJ ou nome'))),
-    ],
-    9: [
-      'Excluir vendedor',
-      async () => mostrar(mp.excluirVendedor(await perguntar('CNPJ'))),
-    ],
+    8: ['Buscar vendedor', async () => mostrar(mp.buscarVendedor(await perguntar('CNPJ ou nome')))],
+    9: ['Excluir vendedor', async () => mostrar(mp.excluirVendedor(await perguntar('CNPJ')))],
+    
 
-    10: [
-      'Cadastrar produto',
-      async () =>
-        mostrar(
-          mp.cadastrarProduto({
-            id: await perguntar('Id'),
-            nome: await perguntar('Nome'),
-            preco: await perguntar('Preço (ex.: 120.50)'),
-            categoria: await perguntar(
-              'Categoria (eletronicos, livros, alimentos, vestuario, casa)',
-            ),
-            vendedorCnpj: await perguntar('CNPJ do vendedor'),
-            quantidade: await perguntar('Quantidade em estoque'),
-          }),
-        ),
-    ],
+    10: ['Cadastrar produto', async () => mostrar(mp.cadastrarProduto({
+     
+      nome: await perguntar('Nome'),
+      preco: await perguntar('Preço (ex.: 120,50)'),
+      categoria: await perguntar('Categoria (eletronicos, livros, alimentos, vestuario, casa)'),
+      vendedorCnpj: await perguntar('CNPJ do vendedor'),
+      quantidade: await perguntar('Quantidade em estoque'),
+    }))],
     11: ['Listar produtos', () => mostrar(mp.listarProdutos())],
-    12: [
-      'Buscar produto',
-      async () => mostrar(mp.buscarProduto(await perguntar('Id ou nome'))),
-    ],
-    13: [
-      'Excluir produto',
-      async () => mostrar(mp.excluirProduto(await perguntar('Id'))),
-    ],
+    12: ['Atualizar produto', async () => mostrar(mp.atualizarProduto(
+        await perguntar('Id do produto'),
+  {
+    nome: await perguntar('Novo nome (Enter para manter)'),
+    preco: await perguntar('Novo preço (Enter para manter)'),
+    categoria: await perguntar('Nova categoria (Enter para manter)'),
+    quantidade: await perguntar('Nova quantidade (Enter para manter)'),
+  },
+))],
+    13: ['Buscar produto', async () => mostrar(mp.buscarProduto(await perguntar('Id ou nome')))],
+    14: ['Excluir produto', async () => mostrar(mp.excluirProduto(await perguntar('Id')))],
 
-    14: ['Cadastrar cupom', async () => mostrar(mp.cadastrarCupom({
+    15: ['Cadastrar cupom', async () => mostrar(mp.cadastrarCupom({
       codigo: await perguntar('Código'),
       tipo: await perguntar('Tipo (percentual, fixo, frete)'),
       valor: await perguntar('Valor'),
@@ -107,9 +91,10 @@ export const iniciarMenu = async (mp) => {
       valorMinimo: await perguntar('Valor mínimo do subtotal (Enter para 0)'),
       cumulativo: (await perguntar('Cumulativo? (s/n)')).trim().toLowerCase() === 's',
     }))],
-    15: ['Listar cupons', () => mostrar(mp.listarCupons())],
-    16: ['Buscar cupom', async () => mostrar(mp.buscarCupom(await perguntar('Código do cupom para buscar')))],
-    17: ['Atualizar cupom', async () => mostrar(mp.atualizarCupom(
+    16: ['Listar cupons', () => mostrar(mp.listarCupons())],
+
+    17: ['Buscar cupom', async () => mostrar(mp.buscarCupom(await perguntar('Código do cupom para buscar')))],
+    18: ['Atualizar cupom', async () => mostrar(mp.atualizarCupom(
       await perguntar('Código do cupom para atualizar'),
       {
         tipo: (await perguntar('Novo tipo (percentual, fixo, frete)')).trim() || undefined,
@@ -120,14 +105,16 @@ export const iniciarMenu = async (mp) => {
           ? (await perguntar('Cumulativo? (s/n)')).trim().toLowerCase() === 's'
           : undefined,
     }))],
-    18: ['Excluir cupom', async () => mostrar(mp.excluirCupom(await perguntar('Código')))],
+    19: ['Excluir cupom', async () => mostrar(mp.excluirCupom(await perguntar('Código')))],
 
-    19: ['Novo pedido', async () => mostrar(mp.criarPedido(await perguntar('CPF do cliente')))],
-    20: ['Adicionar item ao pedido', async () => mostrar(mp.adicionarItem(
+    20: ['Novo pedido', async () => mostrar(mp.criarPedido(await perguntar('CPF do cliente')))],
+    21: ['Adicionar item ao pedido', async () => mostrar(mp.adicionarItem(
+
       await perguntar('Número do pedido'),
       await perguntar('Id do produto'),
       await perguntar('Quantidade'),
     ))],
+
     21: ['Remover item do pedido', async () => mostrar(mp.removerItem(
       await perguntar('Número do pedido'),
       await perguntar('Id do produto'),
@@ -142,6 +129,7 @@ export const iniciarMenu = async (mp) => {
     26: ['Listar pedidos', () => mostrar(mp.listarPedidos())],
 
     27: ['Relatório financeiro', () => mostrar(mp.relatorioFinanceiro())],
+
   };
 
   const mostrarMenu = () => {

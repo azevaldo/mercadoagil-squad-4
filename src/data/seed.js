@@ -39,7 +39,7 @@ export const vendedores = [
 
 export const produtos = [
   {
-    id: 1,
+  //  id: 1,
     nome: 'Mouse',
     preco: 120,
     categoria: 'eletronicos',
@@ -47,7 +47,7 @@ export const produtos = [
     vendedorCnpj: '11.222.333/0001-81',
   },
   {
-    id: 2,
+   // id: 2,
     nome: 'Livro de JavaScript',
     preco: 80,
     categoria: 'livros',
@@ -55,7 +55,7 @@ export const produtos = [
     vendedorCnpj: '45.723.174/0001-10',
   },
   {
-    id: 3,
+  //  id: 3,
     nome: 'Teclado Mecânico',
     preco: 250,
     categoria: 'eletronicos',
@@ -63,7 +63,7 @@ export const produtos = [
     vendedorCnpj: '11.222.333/0001-81',
   },
   {
-    id: 4,
+  //  id: 4,
     nome: 'Fone Bluetooth',
     preco: 180,
     categoria: 'eletronicos',
@@ -71,7 +71,7 @@ export const produtos = [
     vendedorCnpj: '11.222.333/0001-81',
   },
   {
-    id: 5,
+  //  id: 5,
     nome: 'Livro de Algoritmos',
     preco: 95,
     categoria: 'livros',
@@ -79,7 +79,7 @@ export const produtos = [
     vendedorCnpj: '45.723.174/0001-10',
   },
   {
-    id: 6,
+  //  id: 6,
     nome: 'Café Especial',
     preco: 28,
     categoria: 'alimentos',
@@ -87,7 +87,7 @@ export const produtos = [
     vendedorCnpj: '04.252.011/0001-10',
   },
   {
-    id: 7,
+  //  id: 7,
     nome: 'Camiseta de Algodão',
     preco: 59.9,
     categoria: 'vestuario',
@@ -95,7 +95,7 @@ export const produtos = [
     vendedorCnpj: '04.252.011/0001-10',
   },
   {
-    id: 8,
+  //  id: 8,
     nome: 'Caneca de Cerâmica',
     preco: 35,
     categoria: 'casa',

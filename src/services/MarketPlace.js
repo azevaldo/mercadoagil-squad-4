@@ -47,9 +47,10 @@ export class Marketplace {
   #vendedores = [];
   #produtos = [];
   #cupons = [];
+ #proximoProdutoId = 1;
   //#pedidos = [];
   #estoque = new Estoque();
-  //#proximoPedidoId = 1;
+  #proximoPedidoId = 1;
   #avisos = [];
 
   // Recebe os dados iniciais e cadastra cada item pelo mesmo método usado pelo menu.
@@ -205,6 +206,8 @@ export class Marketplace {
     const validado = validar(produtoSchema, dados);
     if (!validado.ok) return validado;
 
+    
+    
     // Estoque e CNPJ não fazem parte do produto
     const { quantidade, vendedorCnpj, ...dadosProduto } = validado.dados;
 
@@ -215,10 +218,12 @@ export class Marketplace {
       return falha([`Já existe um produto com o id ${dadosProduto.id}.`]);
     }
 
-    //console.log(vendedor.nomeLoja);
-    const produto = new Produto({ ...dadosProduto, vendedor });
-    this.#produtos = [...this.#produtos, produto];
-    this.#estoque.cadastrar(produto, quantidade);
+feature/produto_crud
+//console.log(vendedor.nomeLoja);
+    const produto = new Produto({ id: this.#proximoProdutoId, ...dadosProduto, vendedor });
+  this.#proximoProdutoId += 1;
+  this.#produtos = [...this.#produtos, produto];
+  this.#estoque.cadastrar(produto, quantidade);
 
     return sucesso({ id: produto.id, nome: produto.nome });
   }
@@ -228,10 +233,55 @@ export class Marketplace {
       this.#produtos.map((produto) => paraProduto(produto, this.#estoque)),
     );
   }
+ atualizarProduto(id, dados) {
+  const produto = this.#produtoPorId(id);
+  if (!produto) return falha(['Produto não encontrado.']);
 
-  buscarProduto(termo) {}
+  // Campo não informado, vazio ou só com espaços mantém o valor atual
+  const informado = (valor) =>
+    valor !== undefined && !(typeof valor === 'string' && valor.trim() === '');
 
-  excluirProduto(id) {}
+  const manter = (campo, atual) => (informado(dados[campo]) ? dados[campo] : atual);
+
+  const validado = validar(produtoSchema, {
+    nome: manter('nome', produto.nome),
+    preco: manter('preco', produto.preco),
+    categoria: manter('categoria', produto.categoria),
+    quantidade: manter('quantidade', this.#estoque.disponivel(produto.id)),
+    vendedorCnpj: produto.vendedor.cnpj,
+  });
+  if (!validado.ok) return validado;
+
+  const { nome, preco, categoria, quantidade } = validado.dados;
+  produto.atualizar({ nome, preco, categoria });
+  this.#estoque.cadastrar(produto, quantidade);
+
+  return sucesso(paraProduto(produto, this.#estoque));
+}
+  buscarProduto(termo) {
+    const texto = String(termo).trim();
+
+    const produto =
+      this.#produtoPorId(texto) ??
+      this.#produtos.find((p) => p.nome.toLowerCase().includes(texto.toLowerCase()));
+
+    return produto
+      ? sucesso(paraProduto(produto, this.#estoque))
+      : falha([`Produto não encontrado: ${texto}`]);
+  }
+
+  excluirProduto(id) {
+    const produto = this.#produtoPorId(id);
+    if (!produto) return falha(['Produto não encontrado.']);
+
+   /* if (this.#pedidos.some((pedido) => pedido.status === 'aberto' && pedido.contemProduto(produto.id))) {
+      return falha(['Este produto está em um pedido aberto. Remova-o do pedido antes de excluir.']);
+    }*/
+
+    this.#produtos = this.#produtos.filter((p) => p !== produto);
+    this.#estoque.remover(produto.id);
+    return sucesso({ removido: produto.nome });
+  }
 
   // ---------- Cupons ----------
 

@@ -69,11 +69,11 @@ const quantidadeSchema = z.preprocess(
 );
 
 export const produtoSchema = z.object({
-  id: z.coerce
+  /*id: z.coerce
     .number({ error: 'O id precisa ser um número.' })
     .int('O id precisa ser um número inteiro.')
     .positive('O id precisa ser maior que zero.'),
-
+*/
   nome: z
     .string()
     .trim()
