@@ -11,7 +11,9 @@ const quantidadeSchema = z.preprocess(
     return Number(quantidade.trim());
   },
   z
-    .number({ error: 'A quantidade deve ser um número inteiro maior que zero.' })
+    .number({
+      error: 'A quantidade deve ser um número inteiro maior que zero.',
+    })
     .int('A quantidade deve ser um número inteiro.')
     .positive('A quantidade deve ser maior que zero.'),
 );

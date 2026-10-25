@@ -38,6 +38,11 @@ export class Vendedor {
     }*/
   // Nota: O CNPJ propositalmente não tem setter, conforme solicitado.
 
+  atualizarDados({ nomeLoja, email }) {
+    this.#nomeLoja = nomeLoja;
+    this.#email = email;
+  }
+
   // --- Método para resposta com CNPJ formatado ---
   paraResposta() {
     // Formata o CNPJ para o padrão XX.XXX.XXX/XXXX-XX

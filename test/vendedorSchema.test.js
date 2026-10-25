@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validarVendedor } from '../src/schemas/vendedorSchema.js';
+import { validar } from '../src/schemas/validar.js';
+import { vendedorSchema } from '../src/schemas/vendedorSchema.js';
 
 const vendedorValido = {
   nomeLoja: '  Loja Central  ',
@@ -9,7 +10,7 @@ const vendedorValido = {
 };
 
 test('valida e normaliza os dados do vendedor', () => {
-  const resposta = validarVendedor(vendedorValido);
+  const resposta = validar(vendedorSchema, vendedorValido);
 
   assert.deepEqual(resposta, {
     ok: true,
@@ -22,7 +23,7 @@ test('valida e normaliza os dados do vendedor', () => {
 });
 
 test('retorna erros para nome da loja, CNPJ e e-mail inválidos', () => {
-  const resposta = validarVendedor({
+  const resposta = validar(vendedorSchema, {
     ...vendedorValido,
     nomeLoja: ' ',
     cnpj: '11.222.333/0001-80',
@@ -34,7 +35,7 @@ test('retorna erros para nome da loja, CNPJ e e-mail inválidos', () => {
 });
 
 test('rejeita CNPJ com dígitos verificadores inválidos', () => {
-  const resposta = validarVendedor({
+  const resposta = validar(vendedorSchema, {
     ...vendedorValido,
     cnpj: '11222333000180',
   });

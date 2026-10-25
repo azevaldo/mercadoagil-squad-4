@@ -9,8 +9,20 @@ import { CupomDesconto } from '../src/models/CupomDesconto.js';
 const techBahia = { nomeLoja: 'TechBahia', cnpj: '11222333000181' };
 const livrariaSol = { nomeLoja: 'Livraria Sol', cnpj: '45723174000110' };
 
-const mouse = { id: 1, nome: 'Mouse', preco: 120, categoria: 'eletronicos', vendedor: techBahia };
-const livro = { id: 2, nome: 'Livro de JavaScript', preco: 80, categoria: 'livros', vendedor: livrariaSol };
+const mouse = {
+  id: 1,
+  nome: 'Mouse',
+  preco: 120,
+  categoria: 'eletronicos',
+  vendedor: techBahia,
+};
+const livro = {
+  id: 2,
+  nome: 'Livro de JavaScript',
+  preco: 80,
+  categoria: 'livros',
+  vendedor: livrariaSol,
+};
 
 const cliente = { nome: 'Cliente do Nordeste', regiaoEntrega: 'Nordeste' };
 

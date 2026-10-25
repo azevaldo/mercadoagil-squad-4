@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Marketplace } from '../services/MarketPlace.js';
+import { Marketplace } from '../src/services/MarketPlace.js';
 
 const clienteInicial = {
   nome: 'Pedro Silva',

@@ -1,4 +1,4 @@
-import { Marketplace } from './src/services/Marketplace.js';
+import { Marketplace } from './src/services/MarketPlace.js';
 import { dadosIniciais } from './src/data/seed.js';
 import { iniciarMenu } from './src/cli/menu.js';
 

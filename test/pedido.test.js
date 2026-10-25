@@ -7,10 +7,34 @@ import { CupomDesconto } from '../src/models/CupomDesconto.js';
 const techBahia = { nomeLoja: 'TechBahia', cnpj: '11222333000181' };
 const livrariaSol = { nomeLoja: 'Livraria Sol', cnpj: '45723174000110' };
 
-const mouse = { id: 1, nome: 'Mouse', preco: 120, categoria: 'eletronicos', vendedor: techBahia };
-const livro = { id: 2, nome: 'Livro de JavaScript', preco: 80, categoria: 'livros', vendedor: livrariaSol };
-const caneca = { id: 3, nome: 'Caneca', preco: 100, categoria: 'casa', vendedor: techBahia };
-const notebook = { id: 4, nome: 'Notebook', preco: 300, categoria: 'eletronicos', vendedor: techBahia };
+const mouse = {
+  id: 1,
+  nome: 'Mouse',
+  preco: 120,
+  categoria: 'eletronicos',
+  vendedor: techBahia,
+};
+const livro = {
+  id: 2,
+  nome: 'Livro de JavaScript',
+  preco: 80,
+  categoria: 'livros',
+  vendedor: livrariaSol,
+};
+const caneca = {
+  id: 3,
+  nome: 'Caneca',
+  preco: 100,
+  categoria: 'casa',
+  vendedor: techBahia,
+};
+const notebook = {
+  id: 4,
+  nome: 'Notebook',
+  preco: 300,
+  categoria: 'eletronicos',
+  vendedor: techBahia,
+};
 
 const cliente = { nome: 'Maria Santos', regiaoEntrega: 'Nordeste' };
 
@@ -23,9 +47,11 @@ const cupom = (dados) =>
     ...dados,
   });
 
-const bemVindo = () => cupom({ codigo: 'BEMVINDO10', tipo: 'percentual', valor: 10 });
+const bemVindo = () =>
+  cupom({ codigo: 'BEMVINDO10', tipo: 'percentual', valor: 10 });
 const pda15 = () => cupom({ codigo: 'PDA15', tipo: 'fixo', valor: 15 });
-const freteZero = () => cupom({ codigo: 'FRETEZERO', tipo: 'frete', valor: 0, cumulativo: false });
+const freteZero = () =>
+  cupom({ codigo: 'FRETEZERO', tipo: 'frete', valor: 0, cumulativo: false });
 
 // Estoque com 10 unidades de cada produto, salvo quando o teste informa outro valor
 const criarEstoque = (...produtos) => {
@@ -130,10 +156,18 @@ describe('Pedido: cupons', () => {
     pedido.adicionarItem(mouse, 1);
 
     const resultado = pedido.aplicarCupom(
-      cupom({ codigo: 'VENCIDO', tipo: 'fixo', valor: 5, validade: '2020-01-01' }),
+      cupom({
+        codigo: 'VENCIDO',
+        tipo: 'fixo',
+        valor: 5,
+        validade: '2020-01-01',
+      }),
     );
 
-    assert.deepEqual(resultado, { ok: false, erros: ['O cupom VENCIDO está vencido.'] });
+    assert.deepEqual(resultado, {
+      ok: false,
+      erros: ['O cupom VENCIDO está vencido.'],
+    });
   });
 
   test('recusa cupom quando o subtotal não atinge o mínimo', () => {
@@ -154,7 +188,9 @@ describe('Pedido: cupons', () => {
     const pedido = novoPedido();
     pedido.adicionarItem(mouse, 1);
     pedido.adicionarItem(livro, 1);
-    pedido.aplicarCupom(cupom({ codigo: 'PDA15', tipo: 'fixo', valor: 15, valorMinimo: 150 }));
+    pedido.aplicarCupom(
+      cupom({ codigo: 'PDA15', tipo: 'fixo', valor: 15, valorMinimo: 150 }),
+    );
 
     const resultado = pedido.removerItem(mouse.id);
 
@@ -323,7 +359,10 @@ describe('Pedido: confirmar e cancelar', () => {
 
     const resultado = pedido.confirmar(estoque);
 
-    assert.deepEqual(resultado, { ok: false, erros: ['O pedido 1 já está confirmado.'] });
+    assert.deepEqual(resultado, {
+      ok: false,
+      erros: ['O pedido 1 já está confirmado.'],
+    });
   });
 
   test('pedido confirmado não aceita mais alterações nos itens', () => {
@@ -348,7 +387,10 @@ describe('Pedido: confirmar e cancelar', () => {
 
     const resultado = pedido.cancelar(estoque);
 
-    assert.deepEqual(resultado, { ok: true, dados: { id: 1, status: 'cancelado' } });
+    assert.deepEqual(resultado, {
+      ok: true,
+      dados: { id: 1, status: 'cancelado' },
+    });
     assert.equal(estoque.disponivel(mouse.id), 10);
   });
 
@@ -369,6 +411,9 @@ describe('Pedido: confirmar e cancelar', () => {
 
     const resultado = pedido.cancelar(criarEstoque());
 
-    assert.deepEqual(resultado, { ok: false, erros: ['O pedido 1 já está cancelado.'] });
+    assert.deepEqual(resultado, {
+      ok: false,
+      erros: ['O pedido 1 já está cancelado.'],
+    });
   });
 });
