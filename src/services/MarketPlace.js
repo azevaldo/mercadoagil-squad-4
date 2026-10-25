@@ -3,6 +3,7 @@ import { Vendedor } from '../models/Vendedor.js';
 import { Produto } from '../models/Produto.js';
 import { CupomDesconto } from '../models/CupomDesconto.js';
 import { Estoque } from '../models/Estoque.js';
+import { Pedido } from '../models/Pedido.js';
 
 import { sucesso, falha } from '../utils/extra.js';
 import { validar } from '../schemas/validar.js';
@@ -51,7 +52,7 @@ export class Marketplace {
   #produtos = [];
   #cupons = [];
   #proximoProdutoId = 1;
-  //#pedidos = [];
+  #pedidos = [];
   #estoque = new Estoque();
   #proximoPedidoId = 1;
   #avisos = [];
@@ -437,6 +438,25 @@ export class Marketplace {
     return sucesso({
       codigo: codigoLimpo,
       mensagem: 'Cupom excluído com sucesso.',
+    });
+  }
+
+  criarPedido(cpf) {
+    const cliente = this.#clientePorCpf(cpf);
+    if (!cliente) {
+      return falha([
+        'Cliente não encontrado. Cadastre o cliente antes de criar o pedido.',
+      ]);
+    }
+
+    const pedido = new Pedido(this.#proximoPedidoId, cliente);
+    this.#pedidos = [...this.#pedidos, pedido];
+    this.#proximoPedidoId += 1;
+
+    return sucesso({
+      id: pedido.id,
+      cliente: cliente.nome,
+      status: pedido.status,
     });
   }
 
