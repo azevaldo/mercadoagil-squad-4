@@ -113,7 +113,7 @@ export const cupons = [
     valorMinimo: 100,
     cumulativo: true,
   },
- 
+
   {
     codigo: 'PDA15',
     tipo: 'fixo',

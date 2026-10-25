@@ -48,3 +48,10 @@ export const clienteSchema = z.object({
   }),
 });
 
+export const atualizacaoClienteSchema = clienteSchema
+  .pick({
+    nome: true,
+    email: true,
+    regiaoEntrega: true,
+  })
+  .strict();

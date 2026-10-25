@@ -6,8 +6,6 @@ export class Produto {
   #vendedor;
 
   constructor({ id, nome, preco, categoria, vendedor }) {
-   
-
     this.#id = id;
     this.#nome = nome;
     this.#preco = preco;

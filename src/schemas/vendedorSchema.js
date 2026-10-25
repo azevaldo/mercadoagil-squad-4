@@ -42,5 +42,3 @@ export const vendedorSchema = z.object({
     .transform(normalizarCnpj),
   email: z.string().trim().email('Informe um e-mail válido.'),
 });
-
-

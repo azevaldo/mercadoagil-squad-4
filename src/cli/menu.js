@@ -13,27 +13,56 @@ const mostrar = ({ ok, dados, erros }) => {
 export const iniciarMenu = async (mp) => {
   // Cada opção: [rótulo, ação]. A ação lê o que precisa e chama o Marketplace.
   const acoes = {
-    1: ['Cadastrar cliente', async () => mostrar(mp.cadastrarCliente({
-      nome: await perguntar('Nome'),
-      email: await perguntar('E-mail'),
-      cpf: await perguntar('CPF'),
-      uf: await perguntar('UF (ex.: SP)'),
-    }))],
+    1: [
+      'Cadastrar cliente',
+      async () =>
+        mostrar(
+          mp.cadastrarCliente({
+            nome: await perguntar('Nome'),
+            email: await perguntar('E-mail'),
+            cpf: await perguntar('CPF'),
+            regiaoEntrega: await perguntar(
+              'Região de entrega (Norte, Nordeste, Centro-Oeste, Sudeste, Sul)',
+            ),
+          }),
+        ),
+    ],
     2: ['Listar clientes', () => mostrar(mp.listarClientes())],
-    3: ['Buscar cliente', async () => mostrar(mp.buscarCliente(await perguntar('CPF ou nome')))],
-    4: ['Excluir cliente', async () => mostrar(mp.excluirCliente(await perguntar('CPF')))],
+    3: [
+      'Buscar cliente',
+      async () => mostrar(mp.buscarCliente(await perguntar('CPF ou nome'))),
+    ],
+    4: [
+      'Atualizar cliente',
+      async () => {
+        const cpf = await perguntar('CPF do cliente');
+        mostrar(
+          mp.atualizarCliente(cpf, {
+            nome: await perguntar('Novo nome'),
+            email: await perguntar('Novo e-mail'),
+            regiaoEntrega: await perguntar(
+              'Nova região (Norte, Nordeste, Centro-Oeste, Sudeste, Sul)',
+            ),
+          }),
+        );
+      },
+    ],
+    5: [
+      'Excluir cliente',
+      async () => mostrar(mp.excluirCliente(await perguntar('CPF'))),
+    ],
 
-    5: ['Cadastrar vendedor', async () => mostrar(mp.cadastrarVendedor({
+    6: ['Cadastrar vendedor', async () => mostrar(mp.cadastrarVendedor({
       nome: await perguntar('Nome da loja'),
       cnpj: await perguntar('CNPJ'),
       email: await perguntar('E-mail'),
     }))],
-    6: ['Listar vendedores', () => mostrar(mp.listarVendedores())],
-    7: ['Buscar vendedor', async () => mostrar(mp.buscarVendedor(await perguntar('CNPJ ou nome')))],
-    8: ['Excluir vendedor', async () => mostrar(mp.excluirVendedor(await perguntar('CNPJ')))],
+    7: ['Listar vendedores', () => mostrar(mp.listarVendedores())],
+    8: ['Buscar vendedor', async () => mostrar(mp.buscarVendedor(await perguntar('CNPJ ou nome')))],
+    9: ['Excluir vendedor', async () => mostrar(mp.excluirVendedor(await perguntar('CNPJ')))],
     
 
-    9: ['Cadastrar produto', async () => mostrar(mp.cadastrarProduto({
+    10: ['Cadastrar produto', async () => mostrar(mp.cadastrarProduto({
      
       nome: await perguntar('Nome'),
       preco: await perguntar('Preço (ex.: 120,50)'),
@@ -41,8 +70,8 @@ export const iniciarMenu = async (mp) => {
       vendedorCnpj: await perguntar('CNPJ do vendedor'),
       quantidade: await perguntar('Quantidade em estoque'),
     }))],
-    10: ['Listar produtos', () => mostrar(mp.listarProdutos())],
-    11: ['Atualizar produto', async () => mostrar(mp.atualizarProduto(
+    11: ['Listar produtos', () => mostrar(mp.listarProdutos())],
+    12: ['Atualizar produto', async () => mostrar(mp.atualizarProduto(
         await perguntar('Id do produto'),
   {
     nome: await perguntar('Novo nome (Enter para manter)'),
@@ -51,10 +80,10 @@ export const iniciarMenu = async (mp) => {
     quantidade: await perguntar('Nova quantidade (Enter para manter)'),
   },
 ))],
-    12: ['Buscar produto', async () => mostrar(mp.buscarProduto(await perguntar('Id ou nome')))],
-    13: ['Excluir produto', async () => mostrar(mp.excluirProduto(await perguntar('Id')))],
+    13: ['Buscar produto', async () => mostrar(mp.buscarProduto(await perguntar('Id ou nome')))],
+    14: ['Excluir produto', async () => mostrar(mp.excluirProduto(await perguntar('Id')))],
 
-    14: ['Cadastrar cupom', async () => mostrar(mp.cadastrarCupom({
+    15: ['Cadastrar cupom', async () => mostrar(mp.cadastrarCupom({
       codigo: await perguntar('Código'),
       tipo: await perguntar('Tipo (percentual, fixo, frete)'),
       valor: await perguntar('Valor'),
@@ -62,35 +91,52 @@ export const iniciarMenu = async (mp) => {
       valorMinimo: await perguntar('Valor mínimo do subtotal (Enter para 0)'),
       cumulativo: (await perguntar('Cumulativo? (s/n)')).trim().toLowerCase() === 's',
     }))],
-    15: ['Listar cupons', () => mostrar(mp.listarCupons())],
-    16: ['Buscar cupom', async () => mostrar(mp.buscarCupom(await perguntar('Código')))],
-    17: ['Excluir cupom', async () => mostrar(mp.excluirCupom(await perguntar('Código')))],
+    16: ['Listar cupons', () => mostrar(mp.listarCupons())],
 
-    18: ['Novo pedido', async () => mostrar(mp.criarPedido(await perguntar('CPF do cliente')))],
-    19: ['Adicionar item ao pedido', async () => mostrar(mp.adicionarItem(
+    17: ['Buscar cupom', async () => mostrar(mp.buscarCupom(await perguntar('Código do cupom para buscar')))],
+    18: ['Atualizar cupom', async () => mostrar(mp.atualizarCupom(
+      await perguntar('Código do cupom para atualizar'),
+      {
+        tipo: (await perguntar('Novo tipo (percentual, fixo, frete)')).trim() || undefined,
+        valor: (await perguntar('Novo valor')).trim() || undefined,
+        validade: (await perguntar('Nova validade AAAA-MM-DD')).trim() || undefined,
+        valorMinimo: (await perguntar('Novo valor mínimo')).trim() || undefined,
+        cumulativo: (await perguntar('Cumulativo? (s/n)')).trim()
+          ? (await perguntar('Cumulativo? (s/n)')).trim().toLowerCase() === 's'
+          : undefined,
+    }))],
+    19: ['Excluir cupom', async () => mostrar(mp.excluirCupom(await perguntar('Código')))],
+
+    20: ['Novo pedido', async () => mostrar(mp.criarPedido(await perguntar('CPF do cliente')))],
+    21: ['Adicionar item ao pedido', async () => mostrar(mp.adicionarItem(
+
       await perguntar('Número do pedido'),
       await perguntar('Id do produto'),
       await perguntar('Quantidade'),
     ))],
-    20: ['Remover item do pedido', async () => mostrar(mp.removerItem(
+
+    21: ['Remover item do pedido', async () => mostrar(mp.removerItem(
       await perguntar('Número do pedido'),
       await perguntar('Id do produto'),
     ))],
-    21: ['Aplicar cupom ao pedido', async () => mostrar(mp.aplicarCupom(
+    22: ['Aplicar cupom ao pedido', async () => mostrar(mp.aplicarCupom(
       await perguntar('Número do pedido'),
       await perguntar('Código do cupom'),
     ))],
-    22: ['Ver resumo do pedido', async () => mostrar(mp.resumoPedido(await perguntar('Número do pedido')))],
-    23: ['Confirmar pedido', async () => mostrar(mp.confirmarPedido(await perguntar('Número do pedido')))],
-    24: ['Cancelar pedido', async () => mostrar(mp.cancelarPedido(await perguntar('Número do pedido')))],
-    25: ['Listar pedidos', () => mostrar(mp.listarPedidos())],
+    23: ['Ver resumo do pedido', async () => mostrar(mp.resumoPedido(await perguntar('Número do pedido')))],
+    24: ['Confirmar pedido', async () => mostrar(mp.confirmarPedido(await perguntar('Número do pedido')))],
+    25: ['Cancelar pedido', async () => mostrar(mp.cancelarPedido(await perguntar('Número do pedido')))],
+    26: ['Listar pedidos', () => mostrar(mp.listarPedidos())],
 
-    26: ['Relatório financeiro', () => mostrar(mp.relatorioFinanceiro())],
+    27: ['Relatório financeiro', () => mostrar(mp.relatorioFinanceiro())],
+
   };
 
   const mostrarMenu = () => {
     console.log('\n=== MercadoÁgil ===');
-    Object.entries(acoes).forEach(([numero, [rotulo]]) => console.log(`${numero} - ${rotulo}`));
+    Object.entries(acoes).forEach(([numero, [rotulo]]) =>
+      console.log(`${numero} - ${rotulo}`),
+    );
     console.log('0 - Sair');
   };
 
