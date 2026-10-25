@@ -50,6 +50,17 @@ const paraProduto = (produto, estoque) => ({
   disponivel: estoque.disponivel(produto.id),
 });
 
+const paraPedido = (pedido) => {
+  const resumo = pedido.resumo();
+
+  return {
+    id: pedido.id,
+    cliente: pedido.cliente.nome,
+    status: pedido.status,
+    total: resumo.dados.total,
+  };
+};
+
 export class Marketplace {
   #clientes = [];
   #vendedores = [];
@@ -268,6 +279,7 @@ export class Marketplace {
 
     return sucesso({ mensagem: 'Vendedor excluído com sucesso.' });
   }
+
 
   // ---------- Produtos ----------
 
@@ -498,6 +510,26 @@ export class Marketplace {
         quantidadeValidada.dados.quantidade,
       );
     });
+  }
+
+  resumoPedido(pedidoId) {
+    return this.#comPedido(pedidoId, (pedido) => pedido.resumo());
+  }
+
+  confirmarPedido(pedidoId) {
+    return this.#comPedido(pedidoId, (pedido) =>
+      pedido.confirmar(this.#estoque),
+    );
+  }
+
+  cancelarPedido(pedidoId) {
+    return this.#comPedido(pedidoId, (pedido) =>
+      pedido.cancelar(this.#estoque),
+    );
+  }
+
+  listarPedidos() {
+    return sucesso(this.#pedidos.map(paraPedido));
   }
 
   // ---------- Relatórios ----------
