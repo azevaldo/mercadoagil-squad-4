@@ -18,7 +18,7 @@ import {
 } from '../schemas/vendedorSchema.js';
 import { produtoSchema, produtoIdSchema } from '../schemas/produtoSchema.js';
 import { cupomSchema } from '../schemas/cupomSchema.js';
-import { itemPedidoSchema, pedidoIdSchema } from '../schemas/itemPedidoSchema.js';
+import { pedidoIdSchema } from '../schemas/itemPedidoSchema.js';
 
 // Formatos de saída: nunca devolvem o CPF
 const paraCliente = (cliente) => cliente.dadosPublicos();
@@ -103,25 +103,21 @@ export class Marketplace {
     const codigoLimpo = String(codigo).trim().toUpperCase();
     return this.#cupons.find((cupom) => cupom.codigo === codigoLimpo);
   }
+
   #pedidoPorId(id) {
     return this.#pedidos.find((pedido) => pedido.id === id);
   }
 
-    // Executa a ação só se o pedido existir
+  // Valida e encontra o pedido antes de executar uma operação.
   #comPedido(id, acao) {
-    const pedido = this.#pedidoPorId(id);
-    return pedido ? acao(pedido) : falha([`Pedido ${id} não encontrado.`]);
-  }
-  /*
-  #pedidoPorId(id) {
-    return this.#pedidos.find((pedido) => pedido.id === Number(id));
-  }
+    const validado = validar(pedidoIdSchema, { pedidoId: id });
+    if (!validado.ok) return validado;
 
-  // Executa a ação só se o pedido existir
-  #comPedido(id, acao) {
-   
+    const pedido = this.#pedidoPorId(validado.dados.pedidoId);
+    return pedido
+      ? acao(pedido)
+      : falha([`Pedido ${validado.dados.pedidoId} não encontrado.`]);
   }
-*/
   // ---------- Clientes ----------
 
   cadastrarCliente(dados) {
