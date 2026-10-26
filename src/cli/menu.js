@@ -262,7 +262,23 @@ export const iniciarMenu = async (mp) => {
 
     29: [
       'Relatório financeiro',
-      () => mostrarRelatorioFinanceiro(mp.relatorioFinanceiro()),
+      async () =>
+        mostrarRelatorioFinanceiro(
+          mp.relatorioFinanceiro({
+            dataInicio: await perguntar(
+              'Data inicial (AAAA-MM-DD; Enter para sem filtro)',
+            ),
+            dataFim: await perguntar(
+              'Data final (AAAA-MM-DD; Enter para sem filtro)',
+            ),
+            vendedor: await perguntar(
+              'Vendedor envolvido (nome ou CNPJ; Enter para sem filtro)',
+            ),
+            cliente: await perguntar(
+              'Cliente (nome, e-mail ou CPF; Enter para sem filtro)',
+            ),
+          }),
+        ),
     ],
   };
 
