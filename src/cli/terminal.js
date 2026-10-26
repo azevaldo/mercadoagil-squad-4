@@ -23,6 +23,7 @@ export class Terminal {
   #linhas;
   #caminho = [];
   #cores;
+  #modoAnterior = false;
 
   constructor() {
     this.#interativo = Boolean(
@@ -30,7 +31,11 @@ export class Terminal {
     );
     this.#cores = this.#interativo && !process.env.NO_COLOR;
     if (this.#interativo) {
+      this.#modoAnterior = Boolean(stdin.isRaw);
       emitKeypressEvents(stdin, { escapeCodeTimeout: 60 });
+      // O modo de leitura pertence à sessão inteira. Alterná-lo entre telas
+      // deixa leituras pendentes do console Windows no modo anterior.
+      stdin.setRawMode(true);
       stdout.write('\x1b[?1049h\x1b[?25l');
     } else {
       this.#rl = createInterface({ input: stdin, output: stdout });
@@ -95,16 +100,13 @@ export class Terminal {
     stdout.write(`\x1b[H\x1b[2J${conteudo.join('\n')}`);
   }
 
-  // Cada tela possui seus listeners e restaura o modo do terminal ao terminar.
+  // Cada tela possui seus listeners; o modo de leitura só muda ao entrar/sair.
   #teclas(desenhar, receber) {
     return new Promise((resolve, reject) => {
-      const modoAnterior = stdin.isRaw;
       const limpar = () => {
         stdin.removeListener('keypress', tecla);
         stdin.removeListener('end', encerrar);
         stdout.removeListener('resize', desenhar);
-        stdin.setRawMode(Boolean(modoAnterior));
-        stdin.pause();
       };
       const concluir = (valor, erro = false) => {
         limpar();
@@ -121,7 +123,6 @@ export class Terminal {
           concluir(erro, true);
         }
       };
-      stdin.setRawMode(true);
       stdin.on('keypress', tecla);
       stdin.once('end', encerrar);
       stdout.on('resize', desenhar);
@@ -324,7 +325,7 @@ export class Terminal {
   fechar() {
     this.#rl?.close();
     if (this.#interativo) {
-      stdin.setRawMode(false);
+      stdin.setRawMode(this.#modoAnterior);
       stdin.pause();
       stdin.unref?.();
       stdout.write('\x1b[0m\x1b[?25h\x1b[?1049l');

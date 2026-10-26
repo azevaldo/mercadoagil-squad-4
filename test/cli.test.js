@@ -67,8 +67,13 @@ const abrirTerminal = (t, colunas = 80, linhas = 24) => {
     const fim = Date.now() + 5000;
     while (Date.now() < fim) {
       const quadro = saida.split('\x1b[H\x1b[2J').at(-1);
-      if (quadro.includes(texto) && validar(stripVTControlCharacters(quadro)))
-        return;
+      if (quadro.includes(texto) && validar(stripVTControlCharacters(quadro))) {
+        // Espera o quadro terminar de chegar antes de enviar outra tecla.
+        // Esc também precisa do intervalo de decodificação do readline.
+        const versao = saida;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        if (saida === versao) return;
+      }
       if (filho.exitCode !== null)
         assert.fail(
           `Terminal saiu: ${filho.exitCode} ${erros} ${JSON.stringify(saida)}`,
