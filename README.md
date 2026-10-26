@@ -68,3 +68,5 @@ docs/        Documentação de desenvolvimento
 ## Contribuição
 
 Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para as orientações de desenvolvimento e contribuição. Os padrões técnicos do projeto estão em [docs/padroes-de-desenvolvimento.md](docs/padroes-de-desenvolvimento.md).
+
+A divisão das responsabilidades do Marketplace está descrita em [docs/arquitetura.md](docs/arquitetura.md).
