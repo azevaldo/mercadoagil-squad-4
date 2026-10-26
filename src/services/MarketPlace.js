@@ -280,7 +280,6 @@ export class Marketplace {
     return sucesso({ mensagem: 'Vendedor excluído com sucesso.' });
   }
 
-
   // ---------- Produtos ----------
 
   cadastrarProduto(dados) {

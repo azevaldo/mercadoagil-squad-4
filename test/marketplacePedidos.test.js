@@ -134,5 +134,6 @@ test('listarPedidos: chaves exatas id, cliente, status, total e CPF ocultado', (
   const chaves = Object.keys(linha).sort();
   assert.deepEqual(chaves, ['cliente', 'id', 'status', 'total'].sort());
   assert.equal(linha.cliente, 'Maria Santos');
+  assert.equal(linha.total, 146.5);
   assert.equal(linha.cpf, undefined);
 });
