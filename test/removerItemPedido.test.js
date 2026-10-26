@@ -11,8 +11,20 @@ import { pedidoIdSchema } from '../src/schemas/itemPedidoSchema.js';
 const techBahia = { nomeLoja: 'TechBahia', cnpj: '11222333000181' };
 const livrariaSol = { nomeLoja: 'Livraria Sol', cnpj: '45723174000110' };
 
-const mouse = { id: 1, nome: 'Mouse', preco: 120, categoria: 'eletronicos', vendedor: techBahia };
-const livro = { id: 2, nome: 'Livro de JavaScript', preco: 80, categoria: 'livros', vendedor: livrariaSol };
+const mouse = {
+  id: 1,
+  nome: 'Mouse',
+  preco: 120,
+  categoria: 'eletronicos',
+  vendedor: techBahia,
+};
+const livro = {
+  id: 2,
+  nome: 'Livro de JavaScript',
+  preco: 80,
+  categoria: 'livros',
+  vendedor: livrariaSol,
+};
 
 const cliente = { nome: 'Maria Santos', regiaoEntrega: 'Nordeste' };
 
@@ -93,7 +105,9 @@ describe('Pedido ficticio completo: removerItem', () => {
     const resultado = pedido.removerItem(mouse.id);
 
     assert.equal(resultado.ok, false);
-    assert.ok(resultado.erros[0].startsWith('O cupom MIN150 exige subtotal mínimo'));
+    assert.ok(
+      resultado.erros[0].startsWith('O cupom MIN150 exige subtotal mínimo'),
+    );
     assert.deepEqual(idsDosItens(pedido), [mouse.id, livro.id]);
   });
 

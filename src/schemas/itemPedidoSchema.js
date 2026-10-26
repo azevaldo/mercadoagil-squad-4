@@ -29,7 +29,9 @@ const idPedidoSchema = z.preprocess(
     return Number(id.trim());
   },
   z
-    .number({ error: 'O id do pedido deve ser um número inteiro maior que zero.' })
+    .number({
+      error: 'O id do pedido deve ser um número inteiro maior que zero.',
+    })
     .int('O id do pedido deve ser um número inteiro.')
     .positive('O id do pedido deve ser maior que zero.'),
 );
