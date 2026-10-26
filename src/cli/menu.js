@@ -1,5 +1,6 @@
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
+import { formatarReais } from '../utils/dinheiro.js';
 
 const rl = createInterface({ input: stdin, output: stdout });
 const perguntar = (texto) => rl.question(`${texto}: `);
@@ -8,6 +9,43 @@ const perguntar = (texto) => rl.question(`${texto}: `);
 const mostrar = ({ ok, dados, erros }) => {
   if (!ok) return erros.forEach((erro) => console.log(`✖ ${erro}`));
   console.table([dados].flat());
+};
+
+const mostrarRelatorioFinanceiro = ({ ok, dados, erros }) => {
+  if (!ok) return erros.forEach((erro) => console.log(`✖ ${erro}`));
+
+  console.log('\n=== Relatório financeiro ===');
+  console.table([
+    {
+      'Pedidos confirmados': dados.quantidadePedidos,
+      'Faturamento total': formatarReais(dados.faturamentoTotal),
+      'Ticket médio': formatarReais(dados.ticketMedio),
+      Descontos: formatarReais(dados.descontosConcedidos),
+      Tributos: formatarReais(dados.tributosTotais),
+      Comissões: formatarReais(dados.comissaoTotal),
+    },
+  ]);
+
+  console.log('Faturamento bruto por categoria');
+  console.table(
+    dados.faturamentoPorCategoria.map(({ categoria, faturamentoBruto }) => ({
+      categoria,
+      faturamento: formatarReais(faturamentoBruto),
+    })),
+  );
+
+  console.log('Repasse por vendedor');
+  console.table(
+    dados.repassePorVendedor.map((repasse) => ({
+      vendedor: repasse.vendedor,
+      bruto: formatarReais(repasse.valorBruto),
+      comissão: formatarReais(repasse.comissao),
+      'a repassar': formatarReais(repasse.valorRepasse),
+    })),
+  );
+
+  console.log('Top 3 produtos mais vendidos');
+  console.table(dados.produtosMaisVendidos);
 };
 
 export const iniciarMenu = async (mp) => {
@@ -222,7 +260,10 @@ export const iniciarMenu = async (mp) => {
     ],
     28: ['Listar pedidos', () => mostrar(mp.listarPedidos())],
 
-    29: ['Relatório financeiro', () => mostrar(mp.relatorioFinanceiro())],
+    29: [
+      'Relatório financeiro',
+      () => mostrarRelatorioFinanceiro(mp.relatorioFinanceiro()),
+    ],
   };
 
   const mostrarMenu = () => {

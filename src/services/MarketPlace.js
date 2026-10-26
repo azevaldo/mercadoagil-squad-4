@@ -4,8 +4,10 @@ import { Produto } from '../models/Produto.js';
 import { CupomDesconto } from '../models/CupomDesconto.js';
 import { Estoque } from '../models/Estoque.js';
 import { Pedido } from '../models/Pedido.js';
+import { CATEGORIAS_PRODUTO } from '../config/regras.js';
 
 import { sucesso, falha } from '../utils/extra.js';
+import { arredondarDinheiro } from '../utils/dinheiro.js';
 import { validar } from '../schemas/validar.js';
 
 import {
@@ -504,10 +506,7 @@ export class Marketplace {
       const produto = this.#produtoPorId(produtoId);
       if (!produto) return falha([`Produto ${produtoId} não encontrado.`]);
 
-      return pedido.adicionarItem(
-        produto,
-        quantidadeValidada.dados.quantidade,
-      );
+      return pedido.adicionarItem(produto, quantidadeValidada.dados.quantidade);
     });
   }
 
@@ -533,5 +532,96 @@ export class Marketplace {
 
   // ---------- Relatórios ----------
 
-  relatorioFinanceiro() {}
+  relatorioFinanceiro() {
+    const pedidosConfirmados = this.#pedidos.filter(
+      (pedido) => pedido.status === 'confirmado',
+    );
+    const dadosPedidos = pedidosConfirmados.map((pedido) =>
+      pedido.dadosFinanceiros(),
+    );
+
+    const faturamentoTotal = arredondarDinheiro(
+      dadosPedidos.reduce((total, pedido) => total + pedido.total, 0),
+    );
+    const quantidadePedidos = dadosPedidos.length;
+
+    const porCategoria = new Map(
+      CATEGORIAS_PRODUTO.map((categoria) => [categoria, 0]),
+    );
+    const porVendedor = new Map();
+    const porProduto = new Map();
+
+    let descontosConcedidos = 0;
+    let tributosTotais = 0;
+    let comissaoTotal = 0;
+
+    dadosPedidos.forEach((pedido) => {
+      descontosConcedidos += pedido.descontos;
+      tributosTotais += pedido.tributos;
+      comissaoTotal += pedido.comissao;
+
+      pedido.itens.forEach((item) => {
+        porCategoria.set(
+          item.categoria,
+          (porCategoria.get(item.categoria) ?? 0) + item.valorBruto,
+        );
+
+        const produto = porProduto.get(item.produtoId) ?? {
+          produto: item.produto,
+          quantidade: 0,
+        };
+        produto.quantidade += item.quantidade;
+        porProduto.set(item.produtoId, produto);
+      });
+
+      pedido.repasses.forEach((repasse) => {
+        const atual = porVendedor.get(repasse.vendedor) ?? {
+          vendedor: repasse.vendedor,
+          valorBruto: 0,
+          comissao: 0,
+          valorRepasse: 0,
+        };
+        atual.valorBruto += repasse.bruto;
+        atual.comissao += repasse.comissao;
+        atual.valorRepasse += repasse.repasse;
+        porVendedor.set(repasse.vendedor, atual);
+      });
+    });
+
+    const faturamentoPorCategoria = CATEGORIAS_PRODUTO.map((categoria) => ({
+      categoria,
+      faturamentoBruto: arredondarDinheiro(porCategoria.get(categoria)),
+    }));
+
+    const repassePorVendedor = [...porVendedor.values()]
+      .map((repasse) => ({
+        ...repasse,
+        valorBruto: arredondarDinheiro(repasse.valorBruto),
+        comissao: arredondarDinheiro(repasse.comissao),
+        valorRepasse: arredondarDinheiro(repasse.valorRepasse),
+      }))
+      .sort((a, b) => a.vendedor.localeCompare(b.vendedor, 'pt-BR'));
+
+    const produtosMaisVendidos = [...porProduto.values()]
+      .sort(
+        (a, b) =>
+          b.quantidade - a.quantidade ||
+          a.produto.localeCompare(b.produto, 'pt-BR'),
+      )
+      .slice(0, 3);
+
+    return sucesso({
+      faturamentoTotal,
+      quantidadePedidos,
+      ticketMedio: quantidadePedidos
+        ? arredondarDinheiro(faturamentoTotal / quantidadePedidos)
+        : 0,
+      faturamentoPorCategoria,
+      repassePorVendedor,
+      produtosMaisVendidos,
+      descontosConcedidos: arredondarDinheiro(descontosConcedidos),
+      tributosTotais: arredondarDinheiro(tributosTotais),
+      comissaoTotal: arredondarDinheiro(comissaoTotal),
+    });
+  }
 }

@@ -25,6 +25,7 @@ export class Pedido {
   #status = 'aberto';
   // Congelado na confirmação: mudanças futuras de preço ou cupom não alteram o pedido
   #calculoFinal = null;
+  #itensFinanceiros = null;
 
   constructor(id, cliente) {
     this.#id = id;
@@ -124,6 +125,22 @@ export class Pedido {
     });
   }
 
+  dadosFinanceiros() {
+    if (this.#status !== 'confirmado' || !this.#calculoFinal) return null;
+
+    const { total, descontos, tributos, comissao, repasses } =
+      this.#calculoFinal;
+
+    return {
+      total,
+      descontos,
+      tributos,
+      comissao,
+      repasses: repasses.map((repasse) => ({ ...repasse })),
+      itens: this.#itensFinanceiros.map((item) => ({ ...item })),
+    };
+  }
+
   confirmar(estoque) {
     if (this.#status !== 'aberto') {
       return falha([`O pedido ${this.#id} já está ${this.#status}.`]);
@@ -141,8 +158,16 @@ export class Pedido {
     const baixa = estoque.baixar(this.#itens);
     if (!baixa.ok) return baixa;
 
+    const calculoFinal = this.#calcular();
     this.#status = 'confirmado';
-    this.#calculoFinal = this.#calcular();
+    this.#calculoFinal = calculoFinal;
+    this.#itensFinanceiros = this.#itens.map((item) => ({
+      produtoId: item.produto.id,
+      produto: item.produto.nome,
+      categoria: item.produto.categoria,
+      quantidade: item.quantidade,
+      valorBruto: arredondarDinheiro(valorDoItem(item)),
+    }));
 
     return sucesso({
       id: this.#id,

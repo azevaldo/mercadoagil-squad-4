@@ -91,11 +91,7 @@ test('aceita o id do pedido como texto, como recebido pelo menu', () => {
   const pedidoId = criarPedido(marketplace);
 
   assert.deepEqual(
-    marketplace.adicionarItem(
-      String(pedidoId),
-      idDoProduto(marketplace),
-      '2',
-    ),
+    marketplace.adicionarItem(String(pedidoId), idDoProduto(marketplace), '2'),
     {
       ok: true,
       dados: { id: pedidoId, totalItens: 1 },
