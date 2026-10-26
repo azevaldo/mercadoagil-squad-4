@@ -1,3 +1,4 @@
+import { ajudaAreas, ajudaAcoes } from './ajuda.js';
 import { criarAcoes } from './acoes.js';
 import { Cancelamento, Encerramento, Terminal } from './terminal.js';
 import {
@@ -50,33 +51,6 @@ const areas = [
     listar: null,
   },
 ];
-const ajudaAcao = (titulo) => {
-  if (/Excluir|Cancelar pedido/.test(titulo))
-    return [
-      'Confira o registro antes de continuar.',
-      'Esc cancela o preenchimento.',
-    ];
-  if (/Atualizar/.test(titulo))
-    return [
-      'Informe o registro e os novos dados.',
-      'Campos opcionais indicam como manter o valor.',
-    ];
-  if (/Relatório|Faturamento|Repasse|Top 3/.test(titulo))
-    return [
-      'Somente pedidos confirmados.',
-      'Filtre por período, vendedor ou cliente.',
-      'Enter deixa o filtro em branco.',
-    ];
-  if (/Listar/.test(titulo))
-    return [
-      'Digite para filtrar os registros.',
-      'Selecione para consultar os detalhes.',
-    ];
-  return [
-    'Preencha os campos solicitados.',
-    'Esc cancela sem concluir a operação.',
-  ];
-};
 const navegarRegistros = async (ui, mp, area) => {
   const resposta = mp[area.listar]();
   if (!resposta.ok || resposta.dados.length === 0) {
@@ -120,7 +94,7 @@ export const iniciarMenu = async (mp) => {
   const ui = new Terminal();
   let tituloAcao = '';
   const acoes = criarAcoes(mp, {
-    perguntar: (texto) => ui.perguntar(texto),
+    perguntar: (texto, opcoes) => ui.perguntar(texto, opcoes),
     mostrar: (resposta) => ui.exibir(tituloAcao, linhasResposta(resposta)),
     mostrarResumoPedido: (resposta) =>
       ui.exibir('Resumo do pedido', linhasResumo(resposta)),
@@ -135,10 +109,11 @@ export const iniciarMenu = async (mp) => {
         'Seu marketplace, por área',
         areas.map((item) => ({
           ...item,
+          explicacao: ajudaAreas[item.rotulo],
           detalhes: [
             item.rotulo,
             '',
-            item.descricao,
+            ajudaAreas[item.rotulo],
             '',
             ...(item.listar
               ? [
@@ -163,7 +138,8 @@ export const iniciarMenu = async (mp) => {
           area.ids.map((id) => ({
             id,
             rotulo: acoes[id][0],
-            detalhes: [acoes[id][0], '', ...ajudaAcao(acoes[id][0])],
+            explicacao: ajudaAcoes[id][0],
+            detalhes: [acoes[id][0], '', ...ajudaAcoes[id]],
           })),
         );
         if (!acao) break;

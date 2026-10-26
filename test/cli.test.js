@@ -141,7 +141,7 @@ const abrirTerminal = (t, colunas = 80, linhas = 24) => {
 test('navega com setas, filtra produtos e mostra preço e estoque', async (t) => {
   const ui = abrirTerminal(t);
   await ui.esperar('Seu marketplace');
-  await ui.tecla('\x1b[B', 'Pessoas que compram');
+  await ui.tecla('\x1b[B', 'Cadastre e consulte');
   await ui.tecla('prod', '1 opção');
   await ui.tecla('\r', 'Catálogo, preços');
   await ui.tecla('\r', 'Consultar produtos');
@@ -251,7 +251,7 @@ test('redimensiona sem perder busca, seleção ou conteúdo do formulário', asy
   await ui.tecla('prod', '1 opção');
   await ui.redimensionar(32, 8, 'Produtos');
   ui.conferirDimensoes(32, 8);
-  await ui.redimensionar(120, 30, 'Catálogo, preços');
+  await ui.redimensionar(120, 30, 'Consulte o catálogo');
   ui.conferirDimensoes(120, 30);
   await ui.tecla('\r', 'Catálogo, preços');
   await ui.tecla('cadastrar', '1 opção');
@@ -286,5 +286,83 @@ test('resumo rola em terminal baixo e mantém todas as linhas acessíveis', asyn
   ui.conferirDimensoes(32, 10);
   await ui.tecla('\x1b[6~', 'Em estoque: 10');
   ui.conferirDimensoes(32, 10);
+  await ui.sair();
+});
+
+test('explica a confirmação e abre ajuda sem executar nem perder a busca', async (t) => {
+  const ui = abrirTerminal(t);
+  await ui.esperar('Seu marketplace');
+  await ui.tecla('\r', 'Da primeira compra');
+  await ui.tecla('confirmar', 'Finalize um pedido aberto');
+  await ui.tecla('?', 'Todos os itens precisam estar disponíveis.');
+  await ui.tecla('\x1b', 'Buscar: confirmar');
+  await ui.sair();
+});
+
+test('mostra descrições e permite ler a ajuda completa em uma coluna', async (t) => {
+  const ui = abrirTerminal(t, 32, 10);
+  await ui.esperar('Seu marketplace');
+  await ui.tecla('prod', 'Consulte o catálogo');
+  ui.conferirDimensoes(32, 10);
+  await ui.tecla('?', 'Consulte o catálogo');
+  ui.conferirDimensoes(32, 10);
+  await ui.tecla('\x1b', 'Buscar: prod');
+  ui.conferirDimensoes(32, 10);
+  await ui.sair();
+});
+
+test('orienta o preenchimento do CPF com exemplo de formato no cadastro', async (t) => {
+  const ui = abrirTerminal(t);
+  await ui.esperar('Seu marketplace');
+  await ui.tecla('clientes', 'Cadastre e consulte');
+  await ui.tecla('\r', 'Pessoas que compram');
+  await ui.tecla('cadastrar', 'Cadastre uma pessoa');
+  await ui.tecla('\r', 'Nome');
+  await ui.tecla('Cliente Exemplo\r', 'E-mail');
+  await ui.tecla('cliente@example.com\r', '390.533.447-05');
+  await ui.sair();
+});
+
+test('corrige nome, e-mail, CPF e região no campo e mantém os dados anteriores', async (t) => {
+  const ui = abrirTerminal(t);
+  await ui.esperar('Seu marketplace');
+  await ui.tecla('clientes', 'Cadastre e consulte');
+  await ui.tecla('\r', 'Pessoas que compram');
+  await ui.tecla('cadastrar', 'Cadastre uma pessoa');
+  await ui.tecla('\r', 'Exemplo: Maria Santos');
+  await ui.tecla('An\r', 'pelo menos 3 caracteres');
+  await ui.tecla('\x15Cliente Novo\r', 'E-mail');
+  await ui.tecla('emailerrado\r', 'Informe um e-mail válido.');
+  await ui.tecla('\x15cliente.novo@example.com\r', 'CPF');
+  await ui.tecla('123\r', 'CPF válido');
+  ui.conferirDimensoes(80, 24);
+  await ui.tecla('\x1539053344705\r', 'Região de entrega');
+  await ui.tecla('nordeste\r', 'Informe uma região válida');
+  await ui.tecla('\x15Nordeste\r', 'Operação concluída');
+  await ui.esperar('Nome: Cliente Novo');
+  await ui.esperar('E-mail: cliente.novo@example.com');
+  await ui.sair();
+});
+
+test('corrige preço, categoria, vendedor e estoque antes de cadastrar produto', async (t) => {
+  const ui = abrirTerminal(t);
+  await ui.esperar('Seu marketplace');
+  await ui.tecla('prod', 'Consulte o catálogo');
+  await ui.tecla('\r', 'Catálogo, preços');
+  await ui.tecla('cadastrar', 'Adicione um produto');
+  await ui.tecla('\r', 'Nome');
+  await ui.tecla('Caneca nova\r', 'Preço');
+  await ui.tecla('abc\r', 'O preço deve ser numérico');
+  await ui.tecla('\x15120,50\r', 'Categoria');
+  await ui.tecla('inexistente\r', 'A categoria informada não é válida.');
+  await ui.tecla('\x15casa\r', 'CNPJ do vendedor');
+  await ui.tecla('12345678000195\r', 'Vendedor não encontrado.');
+  await ui.tecla('\x1511222333000181\r', 'Quantidade em estoque');
+  await ui.tecla(
+    '-1\r',
+    'A quantidade deve ser um número inteiro não negativo.',
+  );
+  await ui.tecla('\x1510\r', 'Operação concluída');
+  await ui.esperar('Nome: Caneca nova');
   await ui.sair();
 });

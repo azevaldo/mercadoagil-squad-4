@@ -84,7 +84,7 @@ const redimensionar = async (colunas, linhas, esperado) => {
 };
 try {
   await aguardar('Seu marketplace');
-  await tecla('\x1b[B', 'Pessoas que compram');
+  await tecla('\x1b[B', 'Cadastre e consulte');
   await tecla('prod', '1 opção');
   await tecla('\r', 'Catálogo, preços');
   await tecla('\r', 'Consultar produtos');
@@ -102,13 +102,15 @@ try {
   await tecla('ped', '1 opção');
   await tecla('\r', 'Da primeira compra');
   await tecla('\r', 'CPF do cliente');
-  await tecla('52998224725\r', 'Operação concluída');
+  await tecla('123\r', 'CPF válido');
+  await tecla('\x1552998224725\r', 'Operação concluída');
   await tecla('\r', 'Da primeira compra');
   await tecla('adicionar', '1 opção');
   await tecla('\r', 'Número do pedido');
   await tecla('1\r', 'Id do produto');
   await tecla('1\r', 'Quantidade');
-  await tecla('1\r', 'Operação concluída');
+  await tecla('0\r', 'A quantidade deve ser maior que zero.');
+  await tecla('\x151\r', 'Operação concluída');
   await tecla('\r', 'Da primeira compra');
   await tecla('confirmar', '1 opção');
   await tecla('\r', 'Número do pedido');

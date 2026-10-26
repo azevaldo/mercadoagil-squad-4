@@ -30,6 +30,8 @@ O menu organiza as operações em **Pedidos, Clientes, Vendedores, Produtos, Cup
 
 - Use **↑ / ↓** para navegar e **Enter** para abrir uma opção.
 - Digite para buscar opções ou filtrar registros, sem diferenciar acentos e maiúsculas.
+- Cada campo mostra uma orientação e um exemplo. **Enter** valida o campo antes de avançar; se houver erro, corrija o valor sem preencher novamente os campos anteriores. **Ctrl+U** limpa o campo atual.
+- Cada área e ação explica sua finalidade. Pressione **?** para ler a explicação completa sem executar a operação; **Esc** retorna à mesma seleção e busca.
 - Nas listagens, o painel à direita mostra os detalhes do registro selecionado. Em terminais estreitos, pressione **Enter** para ver os detalhes.
 - Pressione **Esc** para voltar ou cancelar um formulário. Na tela inicial, **Esc** encerra o sistema; **Ctrl+C** encerra de qualquer tela.
 - Resultados e relatórios permanecem na tela até **Enter** ou **Esc**. Use **↑ / ↓** ou **Page Up / Page Down** para rolar.

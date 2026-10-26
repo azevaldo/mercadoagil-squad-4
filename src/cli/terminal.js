@@ -51,10 +51,6 @@ export class Terminal {
   get #largura() {
     return this.#medidas.largura;
   }
-  get #altura() {
-    const corpo = this.#medidas.corpo;
-    return Math.max(1, corpo - (corpo >= 6 ? 3 : corpo >= 4 ? 1 : 0));
-  }
   #cor(texto, codigo) {
     return this.#cores ? `\x1b[${codigo}m${texto}\x1b[0m` : texto;
   }
@@ -135,7 +131,9 @@ export class Terminal {
     if (!this.#interativo) {
       console.log(`\nMercadoÁgil / ${titulo}`);
       opcoes.forEach((opcao, indice) =>
-        console.log(`${indice + 1} - ${opcao.rotulo}`),
+        console.log(
+          `${indice + 1} - ${opcao.rotulo}${opcao.explicacao ? ` — ${opcao.explicacao}` : ''}`,
+        ),
       );
       console.log(`0 - ${voltar}`);
       let resposta;
@@ -162,6 +160,7 @@ export class Terminal {
     }
     let busca = '';
     let indice = 0;
+    let alturaVisivel = 1;
     const filtradas = () =>
       opcoes.filter((opcao) =>
         normalizarBusca(`${opcao.rotulo} ${opcao.busca ?? ''}`).includes(
@@ -171,10 +170,30 @@ export class Terminal {
     const desenhar = () => {
       const lista = filtradas();
       const selecionada = lista[indice];
-      const altura = this.#altura;
-      const inicio = Math.max(0, indice - altura + 1);
+
       const painel = selecionada?.detalhes ?? detalhes;
       const duasColunas = this.#largura >= 78;
+      const corpo = this.#medidas.corpo;
+      const metadados =
+        corpo >= 8
+          ? [
+              `Buscar: ${busca || 'digite para filtrar'}`,
+              `${lista.length} opção(ões)${lista.length ? ` · ${indice + 1}/${lista.length}` : ''}`,
+              '',
+            ]
+          : corpo >= 4
+            ? [`Buscar: ${busca || 'digite para filtrar'}`]
+            : [];
+      const explicacao =
+        !duasColunas && selecionada?.explicacao && corpo >= 4
+          ? quebrarLinha(selecionada.explicacao, this.#largura - 2).slice(
+              0,
+              Math.min(3, corpo - metadados.length - 1),
+            )
+          : [];
+      const altura = Math.max(1, corpo - metadados.length - explicacao.length);
+      alturaVisivel = altura;
+      const inicio = Math.max(0, indice - altura + 1);
       const esquerda = Math.floor(this.#largura * 0.46);
       const painelQuebrado = painel.flatMap((linha) =>
         quebrarLinha(linha, this.#largura - esquerda - 5),
@@ -194,69 +213,102 @@ export class Terminal {
           selecionada: Boolean(opcao && ativa),
         };
       });
-      const corpo = this.#medidas.corpo;
-      const metadados =
-        corpo >= 6
-          ? [
-              `Buscar: ${busca || 'digite para filtrar'}`,
-              `${lista.length} opção(ões)${lista.length ? ` · ${indice + 1}/${lista.length}` : ''}`,
-              '',
-            ]
-          : corpo >= 4
-            ? [`Buscar: ${busca || 'digite para filtrar'}`]
-            : [];
       this.#tela(
         busca && corpo < 4 ? `Buscar: ${busca}` : titulo,
-        [...metadados, ...linhas],
+        [...metadados, ...linhas, ...explicacao],
         this.#medidas.compacto
-          ? '↑↓ · Enter · Esc'
-          : `↑↓ navegar · Enter abrir · Esc ${voltar.toLowerCase()} · Ctrl+C sair`,
+          ? '↑↓ Enter Esc ? ajuda'
+          : `↑↓ navegar · Enter abrir · ? explicação · Esc ${voltar.toLowerCase()}`,
       );
     };
-    return this.#teclas(desenhar, (texto, key, concluir) => {
-      const lista = filtradas();
-      if (key.name === 'escape') return concluir(null);
-      if (texto === '/' && !busca) return;
-      if (key.name === 'return') {
-        if (lista[indice]) concluir(lista[indice]);
-        return;
+    let resultado;
+    do {
+      resultado = await this.#teclas(desenhar, (texto, key, concluir) => {
+        const lista = filtradas();
+        if (texto === '?' && lista[indice]) return concluir({ ajuda: true });
+        if (key.name === 'escape') return concluir(null);
+        if (texto === '/' && !busca) return;
+        if (key.name === 'return') {
+          if (lista[indice]) concluir(lista[indice]);
+          return;
+        }
+        if (key.name === 'up') indice = Math.max(0, indice - 1);
+        else if (key.name === 'down')
+          indice = Math.min(Math.max(0, lista.length - 1), indice + 1);
+        else if (key.name === 'pageup')
+          indice = Math.max(0, indice - alturaVisivel);
+        else if (key.name === 'pagedown')
+          indice = Math.min(
+            Math.max(0, lista.length - 1),
+            indice + alturaVisivel,
+          );
+        else if (key.name === 'backspace') {
+          busca = Array.from(busca).slice(0, -1).join('');
+          indice = 0;
+        } else if (texto && !key.ctrl && !key.meta && !/\p{C}/u.test(texto)) {
+          busca += texto;
+          indice = 0;
+        }
+        desenhar();
+      });
+      if (resultado?.ajuda) {
+        const opcao = filtradas()[indice];
+        await this.exibir(
+          opcao.rotulo,
+          opcao.detalhes?.length
+            ? opcao.detalhes
+            : [
+                opcao.explicacao ??
+                  'Digite para filtrar e pressione Enter para abrir.',
+              ],
+        );
       }
-      if (key.name === 'up') indice = Math.max(0, indice - 1);
-      else if (key.name === 'down')
-        indice = Math.min(Math.max(0, lista.length - 1), indice + 1);
-      else if (key.name === 'pageup')
-        indice = Math.max(0, indice - this.#altura);
-      else if (key.name === 'pagedown')
-        indice = Math.min(Math.max(0, lista.length - 1), indice + this.#altura);
-      else if (key.name === 'backspace') {
-        busca = Array.from(busca).slice(0, -1).join('');
-        indice = 0;
-      } else if (texto && !key.ctrl && !key.meta && !/\p{C}/u.test(texto)) {
-        busca += texto;
-        indice = 0;
-      }
-      desenhar();
-    });
+    } while (resultado?.ajuda);
+    return resultado;
   }
 
-  async perguntar(rotulo) {
+  async perguntar(rotulo, opcoes = {}) {
+    const {
+      ajuda = '',
+      exemplo = '',
+      validar = () => '',
+    } = typeof opcoes === 'string' ? { ajuda: opcoes } : opcoes;
     if (!this.#interativo) {
       try {
-        stdout.write(`${rotulo} (/voltar para cancelar): `);
-        const { value: resposta, done } = await this.#linhas.next();
-        if (done) throw new Encerramento();
-        if (resposta === '/voltar') throw new Cancelamento();
-        return resposta.trim();
+        if (ajuda) console.log(ajuda);
+        if (exemplo) console.log(`Exemplo: ${exemplo}`);
+        while (true) {
+          stdout.write(`${rotulo} (/voltar para cancelar): `);
+          const { value: resposta, done } = await this.#linhas.next();
+          if (done) throw new Encerramento();
+          if (resposta === '/voltar') throw new Cancelamento();
+          const valor = resposta.trim();
+          const erro = validar(valor);
+          if (!erro) return valor;
+          console.log(`✖ ${erro}${exemplo ? ` Exemplo: ${exemplo}` : ''}`);
+        }
       } catch (erro) {
         if (erro instanceof Cancelamento) throw erro;
         throw new Encerramento();
       }
     }
     let valor = '';
+    let erro = '';
     let inicioRotulo = 0;
     const desenhar = () => {
       const corpo = this.#medidas.corpo;
-      const rotulos = quebrarLinha(rotulo, this.#largura - 2);
+      const largura = this.#largura - 2;
+      const rotulos = [
+        ...(erro ? quebrarLinha(`✖ ${erro}`, largura) : []),
+        ...(erro && exemplo
+          ? quebrarLinha(`Exemplo: ${exemplo}`, largura)
+          : []),
+        ...quebrarLinha(rotulo, largura),
+        ...(ajuda ? ['', ...quebrarLinha(ajuda, largura)] : []),
+        ...(!erro && exemplo
+          ? quebrarLinha(`Exemplo: ${exemplo}`, largura)
+          : []),
+      ];
       const espacoRotulo = Math.max(1, corpo - (corpo >= 6 ? 4 : 1));
       inicioRotulo = Math.min(
         inicioRotulo,
@@ -264,21 +316,27 @@ export class Terminal {
       );
       const entrada = `› ${finalTexto(valor, this.#largura - 4)}▏`;
       this.#tela(
-        'Preencha os dados',
+        erro ? 'Corrija este campo' : 'Preencha os dados',
         [
           ...rotulos.slice(inicioRotulo, inicioRotulo + espacoRotulo),
           ...(corpo >= 6
-            ? ['', entrada, '', '↑↓ rola a pergunta · Enter confirma']
+            ? ['', entrada, '', '↑↓ lê a orientação · Ctrl+U limpa o campo']
             : [entrada]),
         ],
         this.#medidas.compacto
           ? 'Enter · Esc'
-          : 'Enter continuar · Backspace apagar · Esc cancelar · Ctrl+C sair',
+          : 'Enter validar e continuar · Esc cancelar · Ctrl+U limpar',
       );
     };
     return this.#teclas(desenhar, (texto, key, concluir) => {
       if (key.name === 'escape') return concluir(new Cancelamento(), true);
-      if (key.name === 'return') return concluir(valor.trim());
+      if (key.name === 'return') {
+        erro = validar(valor.trim());
+        if (!erro) return concluir(valor.trim());
+        inicioRotulo = 0;
+        desenhar();
+        return;
+      }
       if (key.name === 'up') inicioRotulo = Math.max(0, inicioRotulo - 1);
       if (key.name === 'down') inicioRotulo += 1;
       if (key.name === 'backspace')
