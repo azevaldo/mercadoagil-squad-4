@@ -16,8 +16,9 @@ import {
   atualizacaoVendedorSchema,
   vendedorSchema,
 } from '../schemas/vendedorSchema.js';
-import { produtoSchema } from '../schemas/produtoSchema.js';
+import { produtoSchema, produtoIdSchema } from '../schemas/produtoSchema.js';
 import { cupomSchema } from '../schemas/cupomSchema.js';
+import { pedidoIdSchema } from '../schemas/itemPedidoSchema.js';
 
 // Formatos de saída: nunca devolvem o CPF
 const paraCliente = (cliente) => cliente.dadosPublicos();
@@ -102,16 +103,21 @@ export class Marketplace {
     const codigoLimpo = String(codigo).trim().toUpperCase();
     return this.#cupons.find((cupom) => cupom.codigo === codigoLimpo);
   }
-  /*
+
   #pedidoPorId(id) {
-    return this.#pedidos.find((pedido) => pedido.id === Number(id));
+    return this.#pedidos.find((pedido) => pedido.id === id);
   }
 
-  // Executa a ação só se o pedido existir
+  // Valida e encontra o pedido antes de executar uma operação.
   #comPedido(id, acao) {
-   
+    const validado = validar(pedidoIdSchema, { pedidoId: id });
+    if (!validado.ok) return validado;
+
+    const pedido = this.#pedidoPorId(validado.dados.pedidoId);
+    return pedido
+      ? acao(pedido)
+      : falha([`Pedido ${validado.dados.pedidoId} não encontrado.`]);
   }
-*/
   // ---------- Clientes ----------
 
   cadastrarCliente(dados) {
@@ -457,6 +463,23 @@ export class Marketplace {
       id: pedido.id,
       cliente: cliente.nome,
       status: pedido.status,
+    });
+  }
+
+  //----------Pedidos----------
+
+  removerItem(pedidoId, produtoId) {
+    const pedidoValidado = validar(pedidoIdSchema, { pedidoId });
+    if (!pedidoValidado.ok) return pedidoValidado;
+
+    const produtoValidado = validar(produtoIdSchema, { produtoId });
+    if (!produtoValidado.ok) return produtoValidado;
+
+    return this.#comPedido(pedidoValidado.dados.pedidoId, (pedido) => {
+      const produto = this.#produtoPorId(produtoValidado.dados.produtoId);
+      if (!produto) return falha([`Produto ${produtoId} não encontrado.`]);
+
+      return pedido.removerItem(produto.id);
     });
   }
 
