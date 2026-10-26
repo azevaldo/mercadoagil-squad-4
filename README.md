@@ -26,7 +26,15 @@ npm install
 npm start
 ```
 
-O menu apresenta as operações disponíveis. Digite `0` para sair.
+O menu organiza as operações em **Pedidos, Clientes, Vendedores, Produtos, Cupons e Relatórios**.
+
+- Use **↑ / ↓** para navegar e **Enter** para abrir uma opção.
+- Digite para buscar opções ou filtrar registros, sem diferenciar acentos e maiúsculas.
+- Nas listagens, o painel à direita mostra os detalhes do registro selecionado. Em terminais estreitos, pressione **Enter** para ver os detalhes.
+- Pressione **Esc** para voltar ou cancelar um formulário. Na tela inicial, **Esc** encerra o sistema; **Ctrl+C** encerra de qualquer tela.
+- Resultados e relatórios permanecem na tela até **Enter** ou **Esc**. Use **↑ / ↓** ou **Page Up / Page Down** para rolar.
+
+O layout acompanha o tamanho do terminal. Sem terminal interativo (ou com `TERM=dumb`), o sistema oferece opções numeradas: `0` volta ou sai, e `/voltar` cancela um formulário. A variável `NO_COLOR=1` desativa as cores. Não é necessário instalar `fzf` ou outras ferramentas.
 
 > Os dados iniciais são carregados de `src/data/seed.js` e mantidos em memória durante a execução. Eles não são salvos entre execuções.
 
