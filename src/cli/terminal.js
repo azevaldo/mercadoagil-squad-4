@@ -1,7 +1,13 @@
 import { emitKeypressEvents } from 'node:readline';
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
-import { textoSeguro } from './apresentacao.js';
+import {
+  medidas,
+  preencher,
+  recortar,
+  quebrarLinha,
+  finalTexto,
+} from './layout.js';
 
 export class Cancelamento extends Error {}
 export class Encerramento extends Error {}
@@ -10,21 +16,6 @@ export const normalizarBusca = (texto) =>
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .toLocaleLowerCase('pt-BR');
-const recortar = (texto, tamanho) => {
-  const caracteres = Array.from(textoSeguro(texto));
-  return caracteres.length > tamanho
-    ? `${caracteres.slice(0, Math.max(0, tamanho - 1)).join('')}…`
-    : caracteres.join('');
-};
-const preencher = (texto, tamanho) => recortar(texto, tamanho).padEnd(tamanho);
-const quebrarLinha = (texto, largura) => {
-  const caracteres = Array.from(textoSeguro(texto));
-  return Array.from(
-    { length: Math.max(1, Math.ceil(caracteres.length / largura)) },
-    (_, indice) =>
-      caracteres.slice(indice * largura, (indice + 1) * largura).join(''),
-  );
-};
 
 export class Terminal {
   #interativo;
@@ -49,11 +40,15 @@ export class Terminal {
   set caminho(valor) {
     this.#caminho = valor;
   }
+  get #medidas() {
+    return medidas(stdout.columns || 80, stdout.rows || 24);
+  }
   get #largura() {
-    return Math.max(12, Math.min(stdout.columns || 80, 110) - 4);
+    return this.#medidas.largura;
   }
   get #altura() {
-    return Math.max(1, (stdout.rows || 24) - 11);
+    const corpo = this.#medidas.corpo;
+    return Math.max(1, corpo - (corpo >= 6 ? 3 : corpo >= 4 ? 1 : 0));
   }
   #cor(texto, codigo) {
     return this.#cores ? `\x1b[${codigo}m${texto}\x1b[0m` : texto;
@@ -63,13 +58,24 @@ export class Terminal {
     const largura = this.#largura;
     const borda = (linha) => this.#cor(linha, '34');
     const cabecalho = `─ MercadoÁgil${this.#caminho.length ? ` / ${this.#caminho.join(' / ')}` : ''} `;
+    if (this.#medidas.minimo) {
+      const linhasMinimas = [
+        'Amplie o terminal',
+        'Mínimo: 24 × 8',
+        'Esc volta · Ctrl+C sai',
+      ]
+        .slice(0, Math.max(1, stdout.rows || 1))
+        .map((linha) => recortar(linha, stdout.columns || 1));
+      stdout.write(`\x1b[H\x1b[2J${linhasMinimas.join('\n')}`);
+      return;
+    }
     const conteudo = [
       borda(
         `╭${preencher(cabecalho, largura).replace(/ +$/, (espacos) => '─'.repeat(espacos.length))}╮`,
       ),
       `│${preencher(` ${titulo}`, largura)}│`,
       borda(`├${'─'.repeat(largura)}┤`),
-      ...linhas.map((linha) => {
+      ...linhas.slice(0, this.#medidas.corpo).map((linha) => {
         const texto = typeof linha === 'string' ? linha : linha.texto;
         const preenchido = preencher(` ${texto}`, largura);
         const codigo =
@@ -86,7 +92,7 @@ export class Terminal {
       `│${preencher(` ${rodape}`, largura)}│`,
       borda(`╰${'─'.repeat(largura)}╯`),
     ];
-    stdout.write(`\x1b[H\x1b[2J${conteudo.join('\n')}\n`);
+    stdout.write(`\x1b[H\x1b[2J${conteudo.join('\n')}`);
   }
 
   // Cada tela possui seus listeners e restaura o modo do terminal ao terminar.
@@ -108,6 +114,7 @@ export class Terminal {
       const encerrar = () => concluir(new Encerramento(), true);
       const tecla = (texto, key = {}) => {
         if (key.ctrl && key.name === 'c') return encerrar();
+        if (this.#medidas.minimo && key.name !== 'escape') return;
         try {
           receber(texto, key, concluir);
         } catch (erro) {
@@ -166,8 +173,11 @@ export class Terminal {
       const altura = this.#altura;
       const inicio = Math.max(0, indice - altura + 1);
       const painel = selecionada?.detalhes ?? detalhes;
-      const duasColunas = this.#largura >= 68;
+      const duasColunas = this.#largura >= 78;
       const esquerda = Math.floor(this.#largura * 0.46);
+      const painelQuebrado = painel.flatMap((linha) =>
+        quebrarLinha(linha, this.#largura - esquerda - 5),
+      );
       const linhas = Array.from({ length: altura }, (_, linha) => {
         const opcao = lista[inicio + linha];
         const ativa = inicio + linha === indice;
@@ -178,20 +188,28 @@ export class Terminal {
             : '';
         return {
           texto: duasColunas
-            ? `${preencher(texto, esquerda)} │ ${recortar(painel[linha] ?? '', this.#largura - esquerda - 5)}`
+            ? `${preencher(texto, esquerda)} │ ${recortar(painelQuebrado[linha] ?? '', this.#largura - esquerda - 5)}`
             : texto,
           selecionada: Boolean(opcao && ativa),
         };
       });
+      const corpo = this.#medidas.corpo;
+      const metadados =
+        corpo >= 6
+          ? [
+              `Buscar: ${busca || 'digite para filtrar'}`,
+              `${lista.length} opção(ões)${lista.length ? ` · ${indice + 1}/${lista.length}` : ''}`,
+              '',
+            ]
+          : corpo >= 4
+            ? [`Buscar: ${busca || 'digite para filtrar'}`]
+            : [];
       this.#tela(
-        titulo,
-        [
-          `Buscar: ${busca || 'digite para filtrar'}`,
-          `${lista.length} opção(ões)${lista.length ? ` · ${indice + 1}/${lista.length}` : ''}`,
-          '',
-          ...linhas,
-        ],
-        `↑↓ navegar · Enter abrir · Esc ${voltar.toLowerCase()} · Ctrl+C sair`,
+        busca && corpo < 4 ? `Buscar: ${busca}` : titulo,
+        [...metadados, ...linhas],
+        this.#medidas.compacto
+          ? '↑↓ · Enter · Esc'
+          : `↑↓ navegar · Enter abrir · Esc ${voltar.toLowerCase()} · Ctrl+C sair`,
       );
     };
     return this.#teclas(desenhar, (texto, key, concluir) => {
@@ -234,22 +252,34 @@ export class Terminal {
       }
     }
     let valor = '';
-    const desenhar = () =>
+    let inicioRotulo = 0;
+    const desenhar = () => {
+      const corpo = this.#medidas.corpo;
+      const rotulos = quebrarLinha(rotulo, this.#largura - 2);
+      const espacoRotulo = Math.max(1, corpo - (corpo >= 6 ? 4 : 1));
+      inicioRotulo = Math.min(
+        inicioRotulo,
+        Math.max(0, rotulos.length - espacoRotulo),
+      );
+      const entrada = `› ${finalTexto(valor, this.#largura - 4)}▏`;
       this.#tela(
         'Preencha os dados',
         [
-          '',
-          ...quebrarLinha(rotulo, this.#largura - 2),
-          '',
-          `› ${valor.slice(-Math.max(8, this.#largura - 5))}▏`,
-          '',
-          'Enter confirma o campo. Esc cancela esta operação.',
+          ...rotulos.slice(inicioRotulo, inicioRotulo + espacoRotulo),
+          ...(corpo >= 6
+            ? ['', entrada, '', '↑↓ rola a pergunta · Enter confirma']
+            : [entrada]),
         ],
-        'Enter continuar · Backspace apagar · Esc cancelar · Ctrl+C sair',
+        this.#medidas.compacto
+          ? 'Enter · Esc'
+          : 'Enter continuar · Backspace apagar · Esc cancelar · Ctrl+C sair',
       );
+    };
     return this.#teclas(desenhar, (texto, key, concluir) => {
       if (key.name === 'escape') return concluir(new Cancelamento(), true);
       if (key.name === 'return') return concluir(valor.trim());
+      if (key.name === 'up') inicioRotulo = Math.max(0, inicioRotulo - 1);
+      if (key.name === 'down') inicioRotulo += 1;
       if (key.name === 'backspace')
         valor = Array.from(valor).slice(0, -1).join('');
       else if (key.ctrl && key.name === 'u') valor = '';
@@ -268,12 +298,14 @@ export class Terminal {
     const desenhar = () => {
       const largura = Math.max(10, this.#largura - 2);
       const quebradas = linhas.flatMap((linha) => quebrarLinha(linha, largura));
-      const altura = this.#altura + 3;
+      const altura = this.#medidas.corpo;
       inicio = Math.min(inicio, Math.max(0, quebradas.length - altura));
       this.#tela(
         titulo,
         quebradas.slice(inicio, inicio + altura),
-        `↑↓ rolar · Enter/Esc voltar · ${inicio + 1}–${Math.min(inicio + altura, quebradas.length)}/${quebradas.length}`,
+        this.#medidas.compacto
+          ? '↑↓ · Enter/Esc'
+          : `↑↓ rolar · Enter/Esc voltar · ${inicio + 1}–${Math.min(inicio + altura, quebradas.length)}/${quebradas.length}`,
       );
       return { tamanho: quebradas.length, altura };
     };

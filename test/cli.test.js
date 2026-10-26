@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
+import { stripVTControlCharacters } from 'node:util';
+import { larguraTexto } from '../src/cli/layout.js';
 import {
   linhasRegistro,
   linhasResumo,
@@ -17,15 +19,21 @@ Object.defineProperty(process.stdin, 'isTTY', { value: true });
 Object.defineProperty(process.stdout, 'isTTY', { value: true });
 process.stdin.setRawMode = () => {};
 process.stdout.columns = Number(process.env.TEST_COLUNAS || 80);
-process.stdout.rows = 24;
+process.stdout.rows = Number(process.env.TEST_LINHAS || 24);
+process.on('message', ({ colunas, linhas }) => {
+  process.stdout.columns = colunas;
+  process.stdout.rows = linhas;
+  process.stdout.emit('resize');
+});
 const { iniciarMenu } = await import('./src/cli/menu.js');
 const { Marketplace } = await import('./src/services/MarketPlace.js');
 const { dadosIniciais } = await import('./src/data/seed.js');
 await iniciarMenu(new Marketplace(dadosIniciais));
+process.disconnect?.();
 `;
 
 // Exercita a leitura de teclas do Node em um processo isolado, sem dependência de fzf.
-const abrirTerminal = (t, colunas = 80) => {
+const abrirTerminal = (t, colunas = 80, linhas = 24) => {
   const ambiente = { ...process.env };
   delete ambiente.NODE_TEST_CONTEXT;
   const filho = spawn(
@@ -38,8 +46,9 @@ const abrirTerminal = (t, colunas = 80) => {
         TERM: 'xterm-256color',
         NO_COLOR: '1',
         TEST_COLUNAS: String(colunas),
+        TEST_LINHAS: String(linhas),
       },
-      stdio: ['pipe', 'pipe', 'pipe'],
+      stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
     },
   );
   t.after(() => {
@@ -54,10 +63,12 @@ const abrirTerminal = (t, colunas = 80) => {
   filho.stderr.on('data', (texto) => {
     erros += texto;
   });
-  const esperar = async (texto) => {
+  const esperar = async (texto, validar = () => true) => {
     const fim = Date.now() + 5000;
     while (Date.now() < fim) {
-      if (saida.split('\x1b[H\x1b[2J').at(-1).includes(texto)) return;
+      const quadro = saida.split('\x1b[H\x1b[2J').at(-1);
+      if (quadro.includes(texto) && validar(stripVTControlCharacters(quadro)))
+        return;
       if (filho.exitCode !== null)
         assert.fail(
           `Terminal saiu: ${filho.exitCode} ${erros} ${JSON.stringify(saida)}`,
@@ -68,6 +79,32 @@ const abrirTerminal = (t, colunas = 80) => {
   };
   return {
     esperar,
+    conferirDimensoes(colunas, linhas) {
+      const quadro = stripVTControlCharacters(
+        saida.split('\x1b[H\x1b[2J').at(-1),
+      );
+      const conteudo = quadro.split('\n');
+      assert.ok(
+        conteudo.length <= linhas,
+        `Altura ${conteudo.length} > ${linhas}`,
+      );
+      conteudo.forEach((linha) =>
+        assert.ok(
+          larguraTexto(linha) <= colunas,
+          `Linha excedeu ${colunas}: ${linha}`,
+        ),
+      );
+      return quadro;
+    },
+    async redimensionar(colunas, linhas, esperado) {
+      saida = '';
+      filho.send({ colunas, linhas });
+      await esperar(esperado, (quadro) =>
+        colunas < 24 || linhas < 8
+          ? quadro.includes('Amplie o terminal')
+          : larguraTexto(quadro.split('\n')[0]) === colunas,
+      );
+    },
     async tecla(tecla, esperado) {
       saida = '';
       filho.stdin.write(tecla);
@@ -184,4 +221,65 @@ test('modo sem TTY aceita entrada em lote, opção inválida e saída por númer
   assert.match(resultado.stdout, /Preço: R\$ 120,00/);
   assert.match(resultado.stdout, /Até já!/);
   assert.ok(!resultado.stdout.includes('\x1b['));
+});
+
+for (const [colunas, linhas] of [
+  [24, 8],
+  [32, 10],
+  [50, 12],
+  [80, 24],
+  [160, 40],
+]) {
+  test(`menu e seleção cabem em ${colunas} × ${linhas}`, async (t) => {
+    const ui = abrirTerminal(t, colunas, linhas);
+    await ui.esperar('Seu marketplace');
+    ui.conferirDimensoes(colunas, linhas);
+    await ui.tecla('\x1b[B'.repeat(5), 'Relatórios');
+    ui.conferirDimensoes(colunas, linhas);
+    await ui.sair();
+  });
+}
+
+test('redimensiona sem perder busca, seleção ou conteúdo do formulário', async (t) => {
+  const ui = abrirTerminal(t, 160, 40);
+  await ui.esperar('Seu marketplace');
+  await ui.tecla('prod', '1 opção');
+  await ui.redimensionar(32, 8, 'Produtos');
+  ui.conferirDimensoes(32, 8);
+  await ui.redimensionar(120, 30, 'Catálogo, preços');
+  ui.conferirDimensoes(120, 30);
+  await ui.tecla('\r', 'Catálogo, preços');
+  await ui.tecla('cadastrar', '1 opção');
+  await ui.tecla('\r', 'Nome');
+  await ui.tecla('Caneca azul', 'Caneca azul');
+  await ui.redimensionar(24, 8, 'Caneca azul');
+  const quadro = ui.conferirDimensoes(24, 8);
+  assert.match(quadro, /Enter · Esc/);
+  await ui.redimensionar(120, 30, 'Caneca azul');
+  await ui.tecla('\x1b', 'Catálogo, preços');
+  await ui.sair();
+});
+
+test('abaixo do tamanho mínimo orienta ampliar e recupera a tela', async (t) => {
+  const ui = abrirTerminal(t);
+  await ui.esperar('Seu marketplace');
+  await ui.redimensionar(20, 4, 'Amplie o terminal');
+  ui.conferirDimensoes(20, 4);
+  await ui.redimensionar(80, 24, 'Seu marketplace');
+  ui.conferirDimensoes(80, 24);
+  await ui.sair();
+});
+
+test('resumo rola em terminal baixo e mantém todas as linhas acessíveis', async (t) => {
+  const ui = abrirTerminal(t, 32, 10);
+  await ui.esperar('Seu marketplace');
+  await ui.tecla('prod', 'Buscar: prod');
+  await ui.tecla('\r', 'Catálogo, preços');
+  await ui.tecla('\r', 'Consultar produtos');
+  await ui.tecla('mouse', 'Mouse');
+  await ui.tecla('\r', 'Número: 1');
+  ui.conferirDimensoes(32, 10);
+  await ui.tecla('\x1b[6~', 'Em estoque: 10');
+  ui.conferirDimensoes(32, 10);
+  await ui.sair();
 });
