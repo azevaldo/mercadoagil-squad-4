@@ -48,6 +48,37 @@ const mostrarRelatorioFinanceiro = ({ ok, dados, erros }) => {
   console.table(dados.produtosMaisVendidos);
 };
 
+const mostrarResumoPedido = (resposta) => {
+  if (!resposta.ok)
+    return resposta.erros.forEach((erro) => console.log(`✖ ${erro}`));
+
+  const { itens, repasses, ...resumo } = resposta.dados;
+
+  console.log('\nResumo do pedido');
+  console.table([resumo]);
+
+  console.log('Itens');
+  console.table(itens);
+
+  if (repasses.length > 0) {
+    console.log('Repasses');
+    console.table(repasses);
+  }
+};
+
+const perguntarFiltrosRelatorio = async () => ({
+  dataInicio: await perguntar(
+    'Data inicial (AAAA-MM-DD; Enter para sem filtro)',
+  ),
+  dataFim: await perguntar('Data final (AAAA-MM-DD; Enter para sem filtro)'),
+  vendedor: await perguntar(
+    'Vendedor envolvido (nome ou CNPJ; Enter para sem filtro)',
+  ),
+  cliente: await perguntar(
+    'Cliente (nome, e-mail ou CPF; Enter para sem filtro)',
+  ),
+});
+
 export const iniciarMenu = async (mp) => {
   // Cada opção: [rótulo, ação]. A ação lê o que precisa e chama o Marketplace.
   const acoes = {
@@ -246,7 +277,10 @@ export const iniciarMenu = async (mp) => {
     ],
     25: [
       'Ver resumo do pedido',
-      async () => mostrar(mp.resumoPedido(await perguntar('Número do pedido'))),
+      async () =>
+        mostrarResumoPedido(
+          mp.resumoPedido(await perguntar('Número do pedido')),
+        ),
     ],
     26: [
       'Confirmar pedido',
@@ -264,21 +298,29 @@ export const iniciarMenu = async (mp) => {
       'Relatório financeiro',
       async () =>
         mostrarRelatorioFinanceiro(
-          mp.relatorioFinanceiro({
-            dataInicio: await perguntar(
-              'Data inicial (AAAA-MM-DD; Enter para sem filtro)',
-            ),
-            dataFim: await perguntar(
-              'Data final (AAAA-MM-DD; Enter para sem filtro)',
-            ),
-            vendedor: await perguntar(
-              'Vendedor envolvido (nome ou CNPJ; Enter para sem filtro)',
-            ),
-            cliente: await perguntar(
-              'Cliente (nome, e-mail ou CPF; Enter para sem filtro)',
-            ),
-          }),
+          mp.relatorioFinanceiro(await perguntarFiltrosRelatorio()),
         ),
+    ],
+    30: [
+      'Faturamento por categoria',
+      async () =>
+        mostrar(
+          mp.relatorioFaturamentoPorCategoria(
+            await perguntarFiltrosRelatorio(),
+          ),
+        ),
+    ],
+    31: [
+      'Repasse por vendedor',
+      async () =>
+        mostrar(
+          mp.relatorioRepassePorVendedor(await perguntarFiltrosRelatorio()),
+        ),
+    ],
+    32: [
+      'Top 3 produtos mais vendidos',
+      async () =>
+        mostrar(mp.relatorioTopProdutos(await perguntarFiltrosRelatorio())),
     ],
   };
 
