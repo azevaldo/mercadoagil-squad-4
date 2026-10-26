@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { larguraTexto } from '../src/cli/layout.js';
 
 // Ferramentas exclusivas da verificação: não entram nas dependências do aplicativo.
 assert.ok(
@@ -47,13 +48,16 @@ const conteudo = () =>
         .getLine(tela.buffer.active.viewportY + indice)
         ?.translateToString(true) ?? '',
   ).join('\n');
-const aguardar = async (texto, anterior = -1) => {
+const aguardar = async (texto, anterior = -1, validar = () => true) => {
   const fim = Date.now() + 15000;
   while (Date.now() < fim) {
-    if (revisao > anterior && conteudo().includes(texto)) {
+    if (revisao > anterior && conteudo().includes(texto) && validar()) {
       const atual = revisao;
       await new Promise((resolve) => setTimeout(resolve, 100));
-      if (revisao === atual && conteudo().includes(texto)) return;
+      if (revisao === atual && conteudo().includes(texto)) {
+        console.log(`OK: ${texto}`);
+        return;
+      }
     }
     if (saida)
       throw new Error(
@@ -69,10 +73,14 @@ const tecla = async (valor, esperado) => {
   await aguardar(esperado, anterior);
 };
 const redimensionar = async (colunas, linhas, esperado) => {
+  console.log(`Redimensionando para ${colunas} × ${linhas}`);
+  const anterior = revisao;
   tela.resize(colunas, linhas);
   app.resize(colunas, linhas);
-  await new Promise((resolve) => setTimeout(resolve, 250));
-  await aguardar(esperado);
+  await aguardar(esperado, anterior, () => {
+    const cabecalho = conteudo().split('\n')[0];
+    return cabecalho.endsWith('╮') && larguraTexto(cabecalho) === colunas;
+  });
 };
 try {
   await aguardar('Seu marketplace');
@@ -124,8 +132,22 @@ try {
   console.log(
     `PASSOU em ${process.platform}: teclas, busca, detalhes, redimensionamento, cancelamento, pedido, valores em reais e saída.`,
   );
+} catch (erro) {
+  console.error(erro);
+  process.exitCode = 1;
 } finally {
-  if (!saida) app.kill();
   await writeFile(join(process.env.CLI_TEST_TOOLS, 'terminal.log'), registro);
+  if (!saida) {
+    if (process.platform === 'win32') {
+      try {
+        process.kill(app.pid);
+      } catch {
+        /* O processo pode já ter encerrado. */
+      }
+    } else app.kill();
+  }
   tela.dispose();
+  // O teste já confirmou a saída do aplicativo acima. Finaliza também os
+  // handles nativos que a ferramenta de ConPTY mantém no processo de teste.
+  if (process.platform === 'win32') process.exit(process.exitCode || 0);
 }

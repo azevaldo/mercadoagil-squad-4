@@ -26,6 +26,7 @@ jobs:
         shell: pwsh
         run: npm install --prefix "$env:RUNNER_TEMP/mercado-cli-tools" --no-save node-pty@1.1.0 @xterm/headless@5.5.0
       - name: Testar navegação e redimensionamento no ConPTY do Windows
+        timeout-minutes: 2
         run: node scripts/verificar-terminal.js
         env:
           CLI_TEST_TOOLS: ${{ runner.temp }}/mercado-cli-tools
