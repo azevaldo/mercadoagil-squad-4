@@ -26,6 +26,7 @@ export class Pedido {
   // Congelado na confirmação: mudanças futuras de preço ou cupom não alteram o pedido
   #calculoFinal = null;
   #itensFinanceiros = null;
+  #confirmadoEm = null;
 
   constructor(id, cliente) {
     this.#id = id;
@@ -136,6 +137,7 @@ export class Pedido {
       descontos,
       tributos,
       comissao,
+      confirmadoEm: new Date(this.#confirmadoEm),
       repasses: repasses.map((repasse) => ({ ...repasse })),
       itens: this.#itensFinanceiros.map((item) => ({ ...item })),
     };
@@ -161,10 +163,13 @@ export class Pedido {
     const calculoFinal = this.#calcular();
     this.#status = 'confirmado';
     this.#calculoFinal = calculoFinal;
+    this.#confirmadoEm = new Date();
     this.#itensFinanceiros = this.#itens.map((item) => ({
       produtoId: item.produto.id,
       produto: item.produto.nome,
       categoria: item.produto.categoria,
+      vendedor: item.produto.vendedor.nomeLoja,
+      vendedorCnpj: item.produto.vendedor.cnpj,
       quantidade: item.quantidade,
       valorBruto: arredondarDinheiro(valorDoItem(item)),
     }));

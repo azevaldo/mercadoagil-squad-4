@@ -9,6 +9,13 @@ const cliente = {
   regiaoEntrega: 'Nordeste',
 };
 
+const outroCliente = {
+  nome: 'João Lima',
+  email: 'joao@example.com',
+  cpf: '111.444.777-35',
+  regiaoEntrega: 'Sul',
+};
+
 const vendedores = [
   {
     nomeLoja: 'TechBahia',
@@ -69,6 +76,20 @@ const confirmarComItens = (marketplace, itens) => {
   );
   marketplace.confirmarPedido(pedidoId);
   return pedidoId;
+};
+
+const dataNoFusoDoProjeto = (data = new Date()) => {
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(data);
+  const campos = Object.fromEntries(
+    partes.map(({ type, value }) => [type, value]),
+  );
+
+  return `${campos.year}-${campos.month}-${campos.day}`;
 };
 
 test('retorna totais zerados quando não há pedidos confirmados', () => {
@@ -169,4 +190,77 @@ test('ignora pedidos abertos e pedidos cancelados, inclusive os já confirmados'
   assert.equal(relatorio.dados.ticketMedio, 0);
   assert.deepEqual(relatorio.dados.repassePorVendedor, []);
   assert.deepEqual(relatorio.dados.produtosMaisVendidos, []);
+});
+
+test('filtra por período, vendedor e cliente, combinando os filtros', () => {
+  const marketplace = criarMarketplace();
+  marketplace.cadastrarCliente(outroCliente);
+
+  confirmarComItens(marketplace, [['Mouse', 1]]);
+  const pedidoDoJoao = marketplace.criarPedido(outroCliente.cpf).dados.id;
+  adicionarItem(marketplace, pedidoDoJoao, 'Livro', 1);
+  marketplace.confirmarPedido(pedidoDoJoao);
+
+  const hoje = dataNoFusoDoProjeto();
+  const porPeriodo = marketplace.relatorioFinanceiro({
+    dataInicio: hoje,
+    dataFim: hoje,
+  });
+  assert.equal(porPeriodo.dados.quantidadePedidos, 2);
+
+  const periodoSemPedidos = marketplace.relatorioFinanceiro({
+    dataInicio: '2000-01-01',
+    dataFim: '2000-01-31',
+  });
+  assert.equal(periodoSemPedidos.dados.quantidadePedidos, 0);
+
+  const porVendedor = marketplace.relatorioFinanceiro({
+    vendedor: '11.222.333/0001-81',
+  });
+  assert.equal(porVendedor.dados.quantidadePedidos, 1);
+  assert.deepEqual(porVendedor.dados.produtosMaisVendidos, [
+    { produto: 'Mouse', quantidade: 1 },
+  ]);
+
+  const porCliente = marketplace.relatorioFinanceiro({
+    cliente: outroCliente.cpf,
+  });
+  assert.equal(porCliente.dados.quantidadePedidos, 1);
+  assert.deepEqual(porCliente.dados.produtosMaisVendidos, [
+    { produto: 'Livro', quantidade: 1 },
+  ]);
+
+  const filtrosCombinados = marketplace.relatorioFinanceiro({
+    dataInicio: hoje,
+    dataFim: hoje,
+    vendedor: 'TechBahia',
+    cliente: 'Maria',
+  });
+  assert.equal(filtrosCombinados.dados.quantidadePedidos, 1);
+  assert.deepEqual(filtrosCombinados.dados.produtosMaisVendidos, [
+    { produto: 'Mouse', quantidade: 1 },
+  ]);
+});
+
+test('recusa datas inválidas e períodos invertidos', () => {
+  const marketplace = criarMarketplace();
+
+  assert.deepEqual(
+    marketplace.relatorioFinanceiro({ dataInicio: '2026-02-30' }),
+    {
+      ok: false,
+      erros: ['A data inicial deve ser uma data válida no formato AAAA-MM-DD.'],
+    },
+  );
+
+  assert.deepEqual(
+    marketplace.relatorioFinanceiro({
+      dataInicio: '2026-10-27',
+      dataFim: '2026-10-26',
+    }),
+    {
+      ok: false,
+      erros: ['A data inicial não pode ser posterior à data final.'],
+    },
+  );
 });
