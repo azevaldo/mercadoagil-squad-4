@@ -18,7 +18,10 @@ import {
 } from '../schemas/vendedorSchema.js';
 import { produtoSchema, produtoIdSchema } from '../schemas/produtoSchema.js';
 import { cupomSchema } from '../schemas/cupomSchema.js';
-import { pedidoIdSchema } from '../schemas/itemPedidoSchema.js';
+import {
+  itemPedidoSchema,
+  pedidoIdSchema,
+} from '../schemas/itemPedidoSchema.js';
 
 // Formatos de saída: nunca devolvem o CPF
 const paraCliente = (cliente) => cliente.dadosPublicos();
@@ -103,7 +106,6 @@ export class Marketplace {
     const codigoLimpo = String(codigo).trim().toUpperCase();
     return this.#cupons.find((cupom) => cupom.codigo === codigoLimpo);
   }
-
   #pedidoPorId(id) {
     return this.#pedidos.find((pedido) => pedido.id === id);
   }
@@ -466,7 +468,7 @@ export class Marketplace {
     });
   }
 
-  //----------Pedidos----------
+  // ---------- Pedidos ----------
 
   removerItem(pedidoId, produtoId) {
     const pedidoValidado = validar(pedidoIdSchema, { pedidoId });
@@ -480,6 +482,21 @@ export class Marketplace {
       if (!produto) return falha([`Produto ${produtoId} não encontrado.`]);
 
       return pedido.removerItem(produto.id);
+    });
+  }
+
+  adicionarItem(pedidoId, produtoId, quantidade) {
+    const quantidadeValidada = validar(itemPedidoSchema, { quantidade });
+    if (!quantidadeValidada.ok) return quantidadeValidada;
+
+    return this.#comPedido(pedidoId, (pedido) => {
+      const produto = this.#produtoPorId(produtoId);
+      if (!produto) return falha([`Produto ${produtoId} não encontrado.`]);
+
+      return pedido.adicionarItem(
+        produto,
+        quantidadeValidada.dados.quantidade,
+      );
     });
   }
 
