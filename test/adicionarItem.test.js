@@ -68,7 +68,7 @@ test('retorna falha quando o pedido não existe', () => {
     marketplace.adicionarItem(99, idDoProduto(marketplace), '1'),
     {
       ok: false,
-      erros: ['Pedido não encontrado.'],
+      erros: ['Pedido 99 não encontrado.'],
     },
   );
 });
@@ -79,6 +79,23 @@ test('adiciona produto ao pedido com quantidade válida', () => {
 
   assert.deepEqual(
     marketplace.adicionarItem(pedidoId, idDoProduto(marketplace), '2'),
+    {
+      ok: true,
+      dados: { id: pedidoId, totalItens: 1 },
+    },
+  );
+});
+
+test('aceita o id do pedido como texto, como recebido pelo menu', () => {
+  const marketplace = criarMarketplace();
+  const pedidoId = criarPedido(marketplace);
+
+  assert.deepEqual(
+    marketplace.adicionarItem(
+      String(pedidoId),
+      idDoProduto(marketplace),
+      '2',
+    ),
     {
       ok: true,
       dados: { id: pedidoId, totalItens: 1 },
