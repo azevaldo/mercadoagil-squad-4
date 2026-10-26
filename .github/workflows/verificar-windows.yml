@@ -1,0 +1,39 @@
+name: Verificar Windows
+
+on:
+  push:
+    branches: [feature/pedro-menu-interativo]
+  pull_request:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run check
+      - name: Instalar ferramentas isoladas para testar o console
+        shell: pwsh
+        run: npm install --prefix "$env:RUNNER_TEMP/mercado-cli-tools" --no-save node-pty@1.1.0 @xterm/headless@5.5.0
+      - name: Testar navegação e redimensionamento no ConPTY do Windows
+        timeout-minutes: 2
+        run: node scripts/verificar-terminal.js
+        env:
+          CLI_TEST_TOOLS: ${{ runner.temp }}/mercado-cli-tools
+      - name: Guardar registro do teste de terminal
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terminal-windows
+          path: ${{ runner.temp }}/mercado-cli-tools/terminal.log
+          if-no-files-found: ignore
