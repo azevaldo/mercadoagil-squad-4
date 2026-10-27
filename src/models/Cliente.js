@@ -45,4 +45,13 @@ export class Cliente {
     };
     return dadosSeguros;
   }
+
+  dadosPersistidos() {
+    return {
+      nome: this.#nome,
+      email: this.#email,
+      cpf: this.#cpf,
+      regiaoEntrega: this.#regiaoEntrega,
+    };
+  }
 }

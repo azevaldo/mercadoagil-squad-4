@@ -21,6 +21,18 @@ export class VendedoresService {
     this.#possuiProdutos = possuiProdutos;
   }
 
+  exportarEstado() {
+    return this.#vendedores.map((vendedor) => ({
+      nomeLoja: vendedor.nomeLoja,
+      cnpj: vendedor.cnpj,
+      email: vendedor.email,
+    }));
+  }
+
+  restaurarEstado(vendedores) {
+    this.#vendedores = vendedores.map((dados) => new Vendedor(dados));
+  }
+
   encontrarPorCnpj(cnpj) {
     return this.#vendedores.find((vendedor) => vendedor.possuiCnpj(cnpj));
   }

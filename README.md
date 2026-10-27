@@ -12,7 +12,7 @@ Sistema de marketplace executado pelo terminal, desenvolvido em JavaScript e Nod
 
 ## Requisitos
 
-- Node.js
+- Node.js 24.15 ou superior
 - npm
 
 ## Como executar
@@ -38,7 +38,9 @@ O menu organiza as operações em **Pedidos, Clientes, Vendedores, Produtos, Cup
 
 O layout usa a largura e a altura atuais do terminal e se reorganiza ao redimensionar a janela, preservando a busca e o formulário. Em janelas baixas, a lista acompanha a seleção e os resultados podem ser rolados. O tamanho mínimo é 24 colunas por 8 linhas; abaixo disso, amplie a janela para continuar. Use **↑ / ↓** para ler perguntas longas em formulários compactos. Sem terminal interativo (ou com `TERM=dumb`), o sistema oferece opções numeradas: `0` volta ou sai, e `/voltar` cancela um formulário. A variável `NO_COLOR=1` desativa as cores. Não é necessário instalar `fzf` ou outras ferramentas.
 
-> Os dados iniciais são carregados de `src/data/seed.js` e mantidos em memória durante a execução. Eles não são salvos entre execuções.
+Na primeira execução, o sistema carrega os dados de exemplo de `src/data/seed.js` e cria o banco local `data/mercadoagil.sqlite`. Os cadastros, pedidos e alterações de estoque ficam salvos para a próxima execução. O arquivo do banco é local e não é enviado ao GitHub.
+
+Para voltar aos dados iniciais, feche o programa e apague `data/mercadoagil.sqlite`. O banco será criado novamente na próxima execução.
 
 ## Testes e verificações
 
@@ -66,11 +68,13 @@ npm run format
 src/
   cli/       Menu e interação pelo terminal
   config/    Regras de negócio
-  data/      Dados iniciais
+  data/      Dados iniciais e acesso ao SQLite
   models/    Entidades do domínio
   schemas/   Validação de dados
   services/  Operações do marketplace e relatórios
   utils/     Funções auxiliares
+data/
+  schema.sql Estrutura das tabelas SQLite
 test/        Testes automatizados
 docs/        Documentação de desenvolvimento
 ```

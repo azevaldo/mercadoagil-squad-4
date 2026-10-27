@@ -9,6 +9,10 @@ import {
 } from '../config/regras.js';
 import { arredondarDinheiro, formatarReais } from '../utils/dinheiro.js';
 import { sucesso, falha } from '../utils/extra.js';
+import { Cliente } from './Cliente.js';
+import { CupomDesconto } from './CupomDesconto.js';
+import { Produto } from './Produto.js';
+import { Vendedor } from './Vendedor.js';
 
 const valorDoItem = ({ precoUnitario, quantidade }) =>
   precoUnitario * quantidade;
@@ -52,6 +56,76 @@ export class Pedido {
 
   get cupons() {
     return [...this.#cupons];
+  }
+
+  exportarEstado() {
+    return {
+      id: this.#id,
+      cliente: this.#cliente.dadosPersistidos(),
+      status: this.#status,
+      confirmadoEm: this.#confirmadoEm?.toISOString() ?? null,
+      calculoFinal: this.#calculoFinal,
+      itensFinanceiros: this.#itensFinanceiros,
+      itens: this.#itens.map((item) => ({
+        produtoId: item.produto.id,
+        produto: {
+          id: item.produto.id,
+          nome: item.produto.nome,
+          preco: item.produto.preco,
+          categoria: item.produto.categoria,
+          vendedor: {
+            nomeLoja: item.produto.vendedor.nomeLoja,
+            cnpj: item.produto.vendedor.cnpj,
+            email: item.produto.vendedor.email,
+          },
+        },
+        quantidade: item.quantidade,
+        precoUnitario: item.precoUnitario,
+      })),
+      cupons: this.#cupons.map((cupom) => ({
+        codigo: cupom.codigo,
+        tipo: cupom.tipo,
+        valor: cupom.valor,
+        validade: cupom.validade.toISOString(),
+        valorMinimo: cupom.valorMinimo,
+        cumulativo: cupom.cumulativo,
+      })),
+    };
+  }
+
+  static restaurarEstado(estado, dependencias) {
+    const cliente =
+      dependencias.buscarCliente(estado.cliente.cpf) ??
+      new Cliente(estado.cliente);
+    const pedido = new Pedido(estado.id, cliente);
+
+    pedido.#status = estado.status;
+    pedido.#confirmadoEm = estado.confirmadoEm
+      ? new Date(estado.confirmadoEm)
+      : null;
+    pedido.#calculoFinal = estado.calculoFinal;
+    pedido.#itensFinanceiros = estado.itensFinanceiros;
+    pedido.#itens = estado.itens.map((item) => {
+      const produtoId = item.produtoId ?? item.produto.id;
+      const vendedor =
+        dependencias.buscarVendedor(item.produto.vendedor.cnpj) ??
+        new Vendedor(item.produto.vendedor);
+      const produto =
+        dependencias.buscarProduto(produtoId) ??
+        new Produto({ ...item.produto, vendedor });
+
+      return {
+        produto,
+        quantidade: item.quantidade,
+        precoUnitario: item.precoUnitario,
+      };
+    });
+    pedido.#cupons = estado.cupons.map(
+      (dados) =>
+        dependencias.buscarCupom(dados.codigo) ?? new CupomDesconto(dados),
+    );
+
+    return pedido;
   }
 
   contemProduto(produtoId) {
