@@ -13,7 +13,7 @@ const ferramentas = createRequire(
 );
 const pty = ferramentas('node-pty');
 const { Terminal } = ferramentas('@xterm/headless');
-const tela = new Terminal({ cols: 80, rows: 24 });
+const tela = new Terminal({ cols: 80, rows: 24, allowProposedApi: true });
 const app = pty.spawn(process.execPath, ['index.js'], {
   name: 'xterm-256color',
   cols: 80,
