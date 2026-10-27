@@ -13,11 +13,12 @@ export class ClientesService  {
   #clientes = [];
 
   // Consulta interna para criar pedidos sem expor a entidade pelo Marketplace.
-  encontrarPorCpf(cpfNormalizado) {
+  encontrarPorCpf(cpf) {
+  const validado = validar(cpfSchema, { cpf });
+  if (!validado.ok) return undefined;
 
-     
-    return this.#clientes.find((cliente) => cliente.possuiCpf(cpfNormalizado));
-  }
+  return this.#clientes.find((cliente) => cliente.possuiCpf(validado.dados.cpf));
+}
 
   cadastrarCliente(dados) {
     const validado = validar(clienteSchema, dados);

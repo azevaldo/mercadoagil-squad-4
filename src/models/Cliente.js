@@ -9,7 +9,7 @@ export class Cliente {
     this.#email = email;
     this.#cpf = cpf;
     this.#regiaoEntrega = regiaoEntrega;
-  }
+  } 
 
   get nome() {
     return this.#nome;
