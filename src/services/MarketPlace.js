@@ -15,13 +15,19 @@ export class Marketplace {
   #pedidos;
   #relatorios;
   #avisos = [];
+  #aoAlterar;
 
-  constructor({
-    vendedores = [],
-    clientes = [],
-    produtos = [],
-    cupons = [],
-  } = {}) {
+  constructor(estado = {}, { aoAlterar } = {}) {
+    const {
+      vendedores = [],
+      clientes = [],
+      produtos = [],
+      cupons = [],
+      pedidos = [],
+      sequencias = {},
+      versao,
+    } = estado;
+
     // Produtos e pedidos compartilham o mesmo estoque nesta instância.
     const estoque = new Estoque();
     this.#clientes = new ClientesService();
@@ -38,30 +44,63 @@ export class Marketplace {
       buscarCliente: (cpf) => this.#clientes.encontrarPorCpf(cpf),
       buscarProduto: (id) => this.#produtos.encontrarPorId(id),
       buscarCupom: (codigo) => this.#cupons.encontrarPorCodigo(codigo),
+      buscarVendedor: (cnpj) => this.#vendedores.encontrarPorCnpj(cnpj),
     });
     this.#relatorios = new RelatoriosService({
       listarPedidosConfirmados: () => this.#pedidos.listarConfirmados(),
     });
 
     // Produto precisa do vendedor já cadastrado. A carga usa as mesmas validações da CLI.
-    const resultados = [
-      ...vendedores.map((dados) => this.cadastrarVendedor(dados)),
-      ...clientes.map((dados) => this.cadastrarCliente(dados)),
-      ...produtos.map((dados) => this.cadastrarProduto(dados)),
-      ...cupons.map((dados) => this.cadastrarCupom(dados)),
-    ];
+    if (versao === 1) {
+      this.#vendedores.restaurarEstado(vendedores);
+      this.#clientes.restaurarEstado(clientes);
+      this.#produtos.restaurarEstado(produtos, sequencias.proximoProdutoId);
+      this.#cupons.restaurarEstado(cupons);
+      this.#pedidos.restaurarEstado(pedidos, sequencias.proximoPedidoId);
+    } else {
+      const resultados = [
+        ...vendedores.map((dados) => this.cadastrarVendedor(dados)),
+        ...clientes.map((dados) => this.cadastrarCliente(dados)),
+        ...produtos.map((dados) => this.cadastrarProduto(dados)),
+        ...cupons.map((dados) => this.cadastrarCupom(dados)),
+      ];
 
-    this.#avisos = resultados
-      .filter((resultado) => !resultado.ok)
-      .flatMap((resultado) => resultado.erros);
+      this.#avisos = resultados
+        .filter((resultado) => !resultado.ok)
+        .flatMap((resultado) => resultado.erros);
+    }
+
+    this.#aoAlterar = aoAlterar;
   }
 
   get avisos() {
     return [...this.#avisos];
   }
 
+  #guardarSeSucesso(resposta) {
+    if (resposta.ok) this.#aoAlterar?.(this.exportarEstado());
+    return resposta;
+  }
+
+  exportarEstado() {
+    const estadoProdutos = this.#produtos.exportarEstado();
+    const estadoPedidos = this.#pedidos.exportarEstado();
+    return {
+      versao: 1,
+      clientes: this.#clientes.exportarEstado(),
+      vendedores: this.#vendedores.exportarEstado(),
+      produtos: estadoProdutos.produtos,
+      cupons: this.#cupons.exportarEstado(),
+      pedidos: estadoPedidos.pedidos,
+      sequencias: {
+        proximoProdutoId: estadoProdutos.proximoId,
+        proximoPedidoId: estadoPedidos.proximoId,
+      },
+    };
+  }
+
   cadastrarCliente(dados) {
-    return this.#clientes.cadastrarCliente(dados);
+    return this.#guardarSeSucesso(this.#clientes.cadastrarCliente(dados));
   }
 
   listarClientes() {
@@ -69,7 +108,7 @@ export class Marketplace {
   }
 
   atualizarCliente(cpf, dados) {
-    return this.#clientes.atualizarCliente(cpf, dados);
+    return this.#guardarSeSucesso(this.#clientes.atualizarCliente(cpf, dados));
   }
 
   buscarCliente(termo) {
@@ -77,13 +116,15 @@ export class Marketplace {
   }
 
   excluirCliente(cpf) {
-    return this.#clientes.excluirCliente(cpf, (cliente) =>
-      this.#pedidos.possuiPedidoAbertoDo(cliente),
+    return this.#guardarSeSucesso(
+      this.#clientes.excluirCliente(cpf, (cliente) =>
+        this.#pedidos.possuiPedidoAbertoDo(cliente),
+      ),
     );
   }
 
   cadastrarVendedor(dados) {
-    return this.#vendedores.cadastrarVendedor(dados);
+    return this.#guardarSeSucesso(this.#vendedores.cadastrarVendedor(dados));
   }
 
   listarVendedores() {
@@ -91,7 +132,9 @@ export class Marketplace {
   }
 
   atualizarVendedor(cnpj, dados) {
-    return this.#vendedores.atualizarVendedor(cnpj, dados);
+    return this.#guardarSeSucesso(
+      this.#vendedores.atualizarVendedor(cnpj, dados),
+    );
   }
 
   buscarVendedor(termo) {
@@ -99,11 +142,11 @@ export class Marketplace {
   }
 
   excluirVendedor(cnpj) {
-    return this.#vendedores.excluirVendedor(cnpj);
+    return this.#guardarSeSucesso(this.#vendedores.excluirVendedor(cnpj));
   }
 
   cadastrarProduto(dados) {
-    return this.#produtos.cadastrarProduto(dados);
+    return this.#guardarSeSucesso(this.#produtos.cadastrarProduto(dados));
   }
 
   listarProdutos() {
@@ -111,7 +154,7 @@ export class Marketplace {
   }
 
   atualizarProduto(id, dados) {
-    return this.#produtos.atualizarProduto(id, dados);
+    return this.#guardarSeSucesso(this.#produtos.atualizarProduto(id, dados));
   }
 
   buscarProduto(termo) {
@@ -119,13 +162,15 @@ export class Marketplace {
   }
 
   excluirProduto(id) {
-    return this.#produtos.excluirProduto(id, (produtoId) =>
-      this.#pedidos.possuiPedidoAbertoComProduto(produtoId),
+    return this.#guardarSeSucesso(
+      this.#produtos.excluirProduto(id, (produtoId) =>
+        this.#pedidos.possuiPedidoAbertoComProduto(produtoId),
+      ),
     );
   }
 
   cadastrarCupom(dados) {
-    return this.#cupons.cadastrarCupom(dados);
+    return this.#guardarSeSucesso(this.#cupons.cadastrarCupom(dados));
   }
 
   listarCupons() {
@@ -137,25 +182,33 @@ export class Marketplace {
   }
 
   atualizarCupom(codigo, novosDados) {
-    return this.#cupons.atualizarCupom(codigo, novosDados);
+    return this.#guardarSeSucesso(
+      this.#cupons.atualizarCupom(codigo, novosDados),
+    );
   }
 
   excluirCupom(codigo) {
-    return this.#cupons.excluirCupom(codigo, (codigoCupom) =>
-      this.#pedidos.possuiPedidoAbertoComCupom(codigoCupom),
+    return this.#guardarSeSucesso(
+      this.#cupons.excluirCupom(codigo, (codigoCupom) =>
+        this.#pedidos.possuiPedidoAbertoComCupom(codigoCupom),
+      ),
     );
   }
 
   criarPedido(cpf) {
-    return this.#pedidos.criarPedido(cpf);
+    return this.#guardarSeSucesso(this.#pedidos.criarPedido(cpf));
   }
 
   removerItem(pedidoId, produtoId) {
-    return this.#pedidos.removerItem(pedidoId, produtoId);
+    return this.#guardarSeSucesso(
+      this.#pedidos.removerItem(pedidoId, produtoId),
+    );
   }
 
   adicionarItem(pedidoId, produtoId, quantidade) {
-    return this.#pedidos.adicionarItem(pedidoId, produtoId, quantidade);
+    return this.#guardarSeSucesso(
+      this.#pedidos.adicionarItem(pedidoId, produtoId, quantidade),
+    );
   }
 
   resumoPedido(pedidoId) {
@@ -163,11 +216,11 @@ export class Marketplace {
   }
 
   confirmarPedido(pedidoId) {
-    return this.#pedidos.confirmarPedido(pedidoId);
+    return this.#guardarSeSucesso(this.#pedidos.confirmarPedido(pedidoId));
   }
 
   cancelarPedido(pedidoId) {
-    return this.#pedidos.cancelarPedido(pedidoId);
+    return this.#guardarSeSucesso(this.#pedidos.cancelarPedido(pedidoId));
   }
 
   listarPedidos() {
@@ -175,11 +228,11 @@ export class Marketplace {
   }
 
   aplicarCupom(pedidoId, codigo) {
-    return this.#pedidos.aplicarCupom(pedidoId, codigo);
+    return this.#guardarSeSucesso(this.#pedidos.aplicarCupom(pedidoId, codigo));
   }
 
   removerCupom(pedidoId, codigo) {
-    return this.#pedidos.removerCupom(pedidoId, codigo);
+    return this.#guardarSeSucesso(this.#pedidos.removerCupom(pedidoId, codigo));
   }
 
   relatorioFinanceiro(filtros = {}) {

@@ -23,6 +23,43 @@ export class ProdutosService {
     this.#buscarVendedor = buscarVendedor;
   }
 
+  exportarEstado() {
+    return {
+      produtos: this.#produtos.map((produto) => ({
+        id: produto.id,
+        nome: produto.nome,
+        preco: produto.preco,
+        categoria: produto.categoria,
+        vendedorCnpj: produto.vendedor.cnpj,
+        quantidade: this.#estoque.disponivel(produto.id),
+      })),
+      proximoId: this.#proximoProdutoId,
+    };
+  }
+
+  restaurarEstado(produtos, proximoId) {
+    this.#produtos = produtos.map((dados) => {
+      const vendedor = this.#buscarVendedor(dados.vendedorCnpj);
+      if (!vendedor) {
+        throw new Error(
+          `O vendedor do produto ${dados.id} não existe no banco.`,
+        );
+      }
+
+      const produto = new Produto({
+        id: dados.id,
+        nome: dados.nome,
+        preco: dados.preco,
+        categoria: dados.categoria,
+        vendedor,
+      });
+      this.#estoque.cadastrar(produto, dados.quantidade);
+      return produto;
+    });
+    this.#proximoProdutoId =
+      proximoId ?? Math.max(0, ...produtos.map(({ id }) => id)) + 1;
+  }
+
   encontrarPorId(id) {
     return this.#produtos.find((produto) => String(produto.id) === String(id));
   }

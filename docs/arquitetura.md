@@ -21,6 +21,12 @@ As consultas entre serviços são passadas pelo construtor como funções. Por e
 
 Essas consultas internas podem retornar entidades para outro serviço. Os serviços permanecem privados no `Marketplace`, que devolve à CLI apenas as respostas públicas existentes.
 
+## Persistência local
+
+`src/data/sqlite.js` cria e acessa o banco `data/mercadoagil.sqlite`; a estrutura das tabelas está em `data/schema.sql`. O arquivo do banco é ignorado pelo Git. Na primeira execução, o seed popula as tabelas; depois, cada operação bem-sucedida salva o estado em uma transação SQLite.
+
+O estado salvo inclui cadastros, estoque, pedidos, cupons aplicados e os valores financeiros congelados na confirmação. Assim, reabrir o sistema não altera o histórico dos pedidos.
+
 ## Regras e relatórios
 
 As regras de itens, cupons, cálculos e transições de status continuam em `Pedido`. A movimentação de estoque continua em `Estoque`, e as taxas permanecem em `config/regras.js`.

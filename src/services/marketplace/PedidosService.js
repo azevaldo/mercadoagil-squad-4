@@ -26,12 +26,40 @@ export class PedidosService {
   #buscarCliente;
   #buscarProduto;
   #buscarCupom;
+  #buscarVendedor;
 
-  constructor({ estoque, buscarCliente, buscarProduto, buscarCupom }) {
+  constructor({
+    estoque,
+    buscarCliente,
+    buscarProduto,
+    buscarCupom,
+    buscarVendedor,
+  }) {
     this.#estoque = estoque;
     this.#buscarCliente = buscarCliente;
     this.#buscarProduto = buscarProduto;
     this.#buscarCupom = buscarCupom;
+    this.#buscarVendedor = buscarVendedor;
+  }
+
+  exportarEstado() {
+    return {
+      pedidos: this.#pedidos.map((pedido) => pedido.exportarEstado()),
+      proximoId: this.#proximoPedidoId,
+    };
+  }
+
+  restaurarEstado(pedidos, proximoId) {
+    this.#pedidos = pedidos.map((pedido) =>
+      Pedido.restaurarEstado(pedido, {
+        buscarCliente: this.#buscarCliente,
+        buscarProduto: this.#buscarProduto,
+        buscarCupom: this.#buscarCupom,
+        buscarVendedor: this.#buscarVendedor,
+      }),
+    );
+    this.#proximoPedidoId =
+      proximoId ?? Math.max(0, ...pedidos.map(({ id }) => id)) + 1;
   }
 
   #pedidoPorId(id) {

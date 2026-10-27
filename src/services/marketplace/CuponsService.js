@@ -15,6 +15,21 @@ const paraCupom = (cupom) => ({
 export class CuponsService {
   #cupons = [];
 
+  exportarEstado() {
+    return this.#cupons.map((cupom) => ({
+      codigo: cupom.codigo,
+      tipo: cupom.tipo,
+      valor: cupom.valor,
+      validade: cupom.validade.toISOString(),
+      valorMinimo: cupom.valorMinimo,
+      cumulativo: cupom.cumulativo,
+    }));
+  }
+
+  restaurarEstado(cupons) {
+    this.#cupons = cupons.map((dados) => new CupomDesconto(dados));
+  }
+
   encontrarPorCodigo(codigo) {
     const codigoLimpo = String(codigo).trim().toUpperCase();
     return this.#cupons.find((cupom) => cupom.codigo === codigoLimpo);

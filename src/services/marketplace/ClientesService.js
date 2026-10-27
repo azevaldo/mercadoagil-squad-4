@@ -12,6 +12,14 @@ const paraCliente = (cliente) => cliente.dadosPublicos();
 export class ClientesService {
   #clientes = [];
 
+  exportarEstado() {
+    return this.#clientes.map((cliente) => cliente.dadosPersistidos());
+  }
+
+  restaurarEstado(clientes) {
+    this.#clientes = clientes.map((dados) => new Cliente(dados));
+  }
+
   // Consulta interna para criar pedidos sem expor a entidade pelo Marketplace.
   encontrarPorCpf(cpf) {
     const validado = validar(cpfSchema, { cpf });
