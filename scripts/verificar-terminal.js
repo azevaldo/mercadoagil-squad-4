@@ -61,11 +61,11 @@ const tecla = async (valor, esperado) => {
 };
 
 try {
-  await aguardar('Menu principal:');
+  await aguardar('Menu principal');
   await tecla('\x1b[B', '› Cadastros');
-  await tecla('\r', 'Cadastros:');
+  await tecla('\r', 'Cadastros');
   assert.ok(
-    !conteudo().includes('Menu principal:'),
+    !conteudo().includes('Menu principal'),
     'O menu anterior deve sumir.',
   );
   await tecla('\x1b', '› Pedidos');
