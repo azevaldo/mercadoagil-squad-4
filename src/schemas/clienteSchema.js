@@ -32,6 +32,13 @@ const validarCpf = (cpf) => {
   return digitos.endsWith(`${primeiroDigito}${segundoDigito}`);
 };
 
+export const cpfSchema = z.object({
+  cpf: z
+    .string()
+    .trim()
+    .refine(validarCpf, 'Informe um CPF válido, com dígitos verificadores.')
+    .transform(normalizarCpf),
+});
 export const clienteSchema = z.object({
   nome: z
     .string()

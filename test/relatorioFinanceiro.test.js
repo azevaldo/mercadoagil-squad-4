@@ -264,3 +264,38 @@ test('recusa datas inválidas e períodos invertidos', () => {
     },
   );
 });
+
+test('mantém vendedores distintos separados mesmo quando têm o mesmo nome', () => {
+  const marketplace = criarMarketplace();
+  marketplace.atualizarVendedor(vendedores[1].cnpj, {
+    nomeLoja: vendedores[0].nomeLoja,
+    email: vendedores[1].email,
+  });
+
+  confirmarComItens(marketplace, [['Mouse', 1]]);
+  confirmarComItens(marketplace, [['Livro', 1]]);
+
+  const repasses = marketplace.relatorioRepassePorVendedor().dados;
+  assert.equal(repasses.length, 2);
+  assert.deepEqual(
+    repasses.map(({ vendedor, valorBruto }) => ({ vendedor, valorBruto })),
+    [
+      { vendedor: vendedores[0].nomeLoja, valorBruto: 120 },
+      { vendedor: vendedores[0].nomeLoja, valorBruto: 80 },
+    ],
+  );
+});
+
+test('alterar os repasses do resumo público não modifica o relatório', () => {
+  const marketplace = criarMarketplace();
+  const pedido = criarPedido(marketplace);
+  adicionarItem(marketplace, pedido, 'Mouse', 1);
+  marketplace.confirmarPedido(pedido);
+
+  marketplace.resumoPedido(pedido).dados.repasses[0].repasse = -1;
+
+  assert.equal(
+    marketplace.relatorioRepassePorVendedor().dados[0].valorRepasse,
+    110.4,
+  );
+});

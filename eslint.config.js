@@ -6,6 +6,9 @@ export default [
   js.configs.recommended,
   {
     files: ['**/*.js'],
+    rules: {
+      'no-unused-vars': ['error', { ignoreRestSiblings: true }],
+    },
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',

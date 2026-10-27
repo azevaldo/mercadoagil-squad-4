@@ -37,10 +37,12 @@ export class Cliente {
 
   // LGPD: o CPF é removido com rest antes de sair da classe
   dadosPublicos() {
-    return {
+    const { cpf, ...dadosSeguros } = {
       nome: this.#nome,
       email: this.#email,
-      regiaoEntrega: this.#regiaoEntrega,
+      cpf: this.#cpf,
+      regiaoEntrega: this.regiaoEntrega,
     };
+    return dadosSeguros;
   }
 }

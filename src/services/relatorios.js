@@ -43,7 +43,8 @@ export const repassePorVendedor = (pedidos) => {
   pedidos
     .flatMap((pedido) => pedido.repasses)
     .forEach((repasse) => {
-      const atual = porVendedor.get(repasse.vendedor) ?? {
+      const chave = repasse.vendedorCnpj ?? repasse.vendedor;
+      const atual = porVendedor.get(chave) ?? {
         vendedor: repasse.vendedor,
         valorBruto: 0,
         comissao: 0,
@@ -53,7 +54,7 @@ export const repassePorVendedor = (pedidos) => {
       atual.valorBruto += repasse.bruto;
       atual.comissao += repasse.comissao;
       atual.valorRepasse += repasse.repasse;
-      porVendedor.set(repasse.vendedor, atual);
+      porVendedor.set(chave, atual);
     });
 
   return [...porVendedor.values()]

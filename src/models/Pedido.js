@@ -122,7 +122,15 @@ export class Pedido {
       cupons: this.#cupons.map((cupom) => cupom.codigo),
       ...calculo,
       // Só pedido confirmado gera repasse (rubrica)
-      repasses: this.#status === 'confirmado' ? calculo.repasses : [],
+      repasses:
+        this.#status === 'confirmado'
+          ? calculo.repasses.map(({ vendedor, bruto, comissao, repasse }) => ({
+              vendedor,
+              bruto,
+              comissao,
+              repasse,
+            }))
+          : [],
     });
   }
 
@@ -332,6 +340,7 @@ export class Pedido {
     const porVendedor = linhas.reduce((acumulado, linha) => {
       const atual = acumulado[linha.vendedor.cnpj] ?? {
         vendedor: linha.vendedor.nomeLoja,
+        vendedorCnpj: linha.vendedor.cnpj,
         bruto: 0,
         comissao: 0,
       };
@@ -347,11 +356,32 @@ export class Pedido {
 
     const repasses = Object.values(porVendedor).map((linha) => ({
       vendedor: linha.vendedor,
+      vendedorCnpj: linha.vendedorCnpj,
       bruto: arredondarDinheiro(linha.bruto),
       comissao: arredondarDinheiro(linha.comissao),
       repasse: arredondarDinheiro(linha.bruto - linha.comissao),
     }));
 
     return { subtotal, descontos, frete, tributos, total, comissao, repasses };
+  }
+  removerCupom(codigo) {
+    const erroEdicao = this.#erroDeEdicao();
+    if (erroEdicao) return falha([erroEdicao]);
+
+    const codigoLimpo = String(codigo ?? '')
+      .trim()
+      .toUpperCase();
+    const cupons = this.#cupons.filter((cupom) => cupom.codigo !== codigoLimpo);
+    if (cupons.length === this.#cupons.length) {
+      return falha([
+        `O cupom ${codigoLimpo || 'informado'} não está no pedido ${this.#id}.`,
+      ]);
+    }
+
+    this.#cupons = cupons;
+    return sucesso({
+      id: this.#id,
+      cupons: cupons.map((cupom) => cupom.codigo),
+    });
   }
 }

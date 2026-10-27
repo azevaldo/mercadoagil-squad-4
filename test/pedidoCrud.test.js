@@ -40,7 +40,7 @@ test('aceita CPF formatado ao criar pedido', () => {
 test('recusa CPF sem cliente cadastrado e mantém a sequência de IDs', () => {
   const marketplace = criarMarketplace();
 
-  assert.deepEqual(marketplace.criarPedido('111.111.111-11'), {
+  assert.deepEqual(marketplace.criarPedido('111.444.777-35'), {
     ok: false,
     erros: [
       'Cliente não encontrado. Cadastre o cliente antes de criar o pedido.',

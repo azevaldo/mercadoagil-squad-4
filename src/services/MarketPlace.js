@@ -77,7 +77,9 @@ export class Marketplace {
   }
 
   excluirCliente(cpf) {
-    return this.#clientes.excluirCliente(cpf);
+    return this.#clientes.excluirCliente(cpf, (cliente) =>
+      this.#pedidos.possuiPedidoAbertoDo(cliente),
+    );
   }
 
   cadastrarVendedor(dados) {
@@ -117,7 +119,9 @@ export class Marketplace {
   }
 
   excluirProduto(id) {
-    return this.#produtos.excluirProduto(id);
+    return this.#produtos.excluirProduto(id, (produtoId) =>
+      this.#pedidos.possuiPedidoAbertoComProduto(produtoId),
+    );
   }
 
   cadastrarCupom(dados) {
@@ -137,7 +141,9 @@ export class Marketplace {
   }
 
   excluirCupom(codigo) {
-    return this.#cupons.excluirCupom(codigo);
+    return this.#cupons.excluirCupom(codigo, (codigoCupom) =>
+      this.#pedidos.possuiPedidoAbertoComCupom(codigoCupom),
+    );
   }
 
   criarPedido(cpf) {
@@ -170,6 +176,10 @@ export class Marketplace {
 
   aplicarCupom(pedidoId, codigo) {
     return this.#pedidos.aplicarCupom(pedidoId, codigo);
+  }
+
+  removerCupom(pedidoId, codigo) {
+    return this.#pedidos.removerCupom(pedidoId, codigo);
   }
 
   relatorioFinanceiro(filtros = {}) {
