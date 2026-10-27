@@ -29,12 +29,20 @@ const criarBancoTemporario = (t) => {
   };
 };
 
+const iniciarMarketplace = (armazenamento) => {
+  const estado = armazenamento.banco.carregarEstado();
+  return new Marketplace(estado ?? dadosIniciais, {
+    aoAlterar: (atual) => armazenamento.banco.salvarEstado(atual),
+    recuperarEstado: () => armazenamento.banco.carregarEstado(),
+    persistirInicial: !estado,
+  });
+};
+
 test('cria um banco vazio e restaura os dados iniciais depois de reabrir', (t) => {
   const armazenamento = criarBancoTemporario(t);
   assert.equal(armazenamento.banco.carregarEstado(), null);
 
-  const marketplace = new Marketplace(dadosIniciais);
-  armazenamento.banco.salvarEstado(marketplace.exportarEstado());
+  iniciarMarketplace(armazenamento);
   const estadoRestaurado = armazenamento.reabrir().carregarEstado();
   const marketplaceRestaurado = new Marketplace(estadoRestaurado);
 
@@ -47,9 +55,7 @@ test('cria um banco vazio e restaura os dados iniciais depois de reabrir', (t) =
 
 test('persiste operações, estoque, pedidos confirmados e sequências após reiniciar', (t) => {
   const armazenamento = criarBancoTemporario(t);
-  const salvar = (estado) => armazenamento.banco.salvarEstado(estado);
-  const marketplace = new Marketplace(dadosIniciais, { aoAlterar: salvar });
-  salvar(marketplace.exportarEstado());
+  const marketplace = iniciarMarketplace(armazenamento);
 
   const pedido = marketplace.criarPedido('52998224725');
   assert.equal(pedido.ok, true);
@@ -71,10 +77,8 @@ test('persiste operações, estoque, pedidos confirmados e sequências após rei
   );
 
   const resumoAntesDeFechar = marketplace.resumoPedido(pedido.dados.id);
-  const marketplaceRestaurado = new Marketplace(
-    armazenamento.reabrir().carregarEstado(),
-    { aoAlterar: salvar },
-  );
+  armazenamento.reabrir();
+  const marketplaceRestaurado = iniciarMarketplace(armazenamento);
 
   assert.deepEqual(
     marketplaceRestaurado.resumoPedido(pedido.dados.id),
@@ -100,9 +104,8 @@ test('persiste operações, estoque, pedidos confirmados e sequências após rei
 
 test('reverte a gravação inteira quando um registro viola uma chave estrangeira', (t) => {
   const armazenamento = criarBancoTemporario(t);
-  const marketplace = new Marketplace(dadosIniciais);
-  const estado = marketplace.exportarEstado();
-  armazenamento.banco.salvarEstado(estado);
+  iniciarMarketplace(armazenamento);
+  const estado = armazenamento.banco.carregarEstado();
 
   const estadoInvalido = {
     ...estado,

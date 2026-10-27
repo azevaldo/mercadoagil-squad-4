@@ -94,8 +94,9 @@ export class Pedido {
   }
 
   static restaurarEstado(estado, dependencias) {
+    const encerrado = estado.status !== 'aberto';
     const cliente =
-      dependencias.buscarCliente(estado.cliente.cpf) ??
+      (!encerrado && dependencias.buscarCliente(estado.cliente.cpf)) ||
       new Cliente(estado.cliente);
     const pedido = new Pedido(estado.id, cliente);
 
@@ -108,10 +109,11 @@ export class Pedido {
     pedido.#itens = estado.itens.map((item) => {
       const produtoId = item.produtoId ?? item.produto.id;
       const vendedor =
-        dependencias.buscarVendedor(item.produto.vendedor.cnpj) ??
+        (!encerrado &&
+          dependencias.buscarVendedor(item.produto.vendedor.cnpj)) ||
         new Vendedor(item.produto.vendedor);
       const produto =
-        dependencias.buscarProduto(produtoId) ??
+        (!encerrado && dependencias.buscarProduto(produtoId)) ||
         new Produto({ ...item.produto, vendedor });
 
       return {
@@ -122,10 +124,47 @@ export class Pedido {
     });
     pedido.#cupons = estado.cupons.map(
       (dados) =>
-        dependencias.buscarCupom(dados.codigo) ?? new CupomDesconto(dados),
+        (!encerrado && dependencias.buscarCupom(dados.codigo)) ||
+        new CupomDesconto(dados),
     );
 
     return pedido;
+  }
+
+  #congelarDados() {
+    const dadosCliente = this.#cliente.dadosPersistidos
+      ? this.#cliente.dadosPersistidos()
+      : { ...this.#cliente };
+    this.#cliente = new Cliente(dadosCliente);
+    this.#itens = this.#itens.map((item) => {
+      const { produto } = item;
+      const vendedor = new Vendedor({
+        nomeLoja: produto.vendedor.nomeLoja,
+        cnpj: produto.vendedor.cnpj,
+        email: produto.vendedor.email,
+      });
+      return {
+        ...item,
+        produto: new Produto({
+          id: produto.id,
+          nome: produto.nome,
+          preco: produto.preco,
+          categoria: produto.categoria,
+          vendedor,
+        }),
+      };
+    });
+    this.#cupons = this.#cupons.map(
+      (cupom) =>
+        new CupomDesconto({
+          codigo: cupom.codigo,
+          tipo: cupom.tipo,
+          valor: cupom.valor,
+          validade: cupom.validade,
+          valorMinimo: cupom.valorMinimo,
+          cumulativo: cupom.cumulativo,
+        }),
+    );
   }
 
   contemProduto(produtoId) {
@@ -255,6 +294,7 @@ export class Pedido {
       quantidade: item.quantidade,
       valorBruto: arredondarDinheiro(valorDoItem(item)),
     }));
+    this.#congelarDados();
 
     return sucesso({
       id: this.#id,
@@ -274,6 +314,7 @@ export class Pedido {
     }
 
     this.#status = 'cancelado';
+    this.#congelarDados();
     return sucesso({ id: this.#id, status: this.#status });
   }
 

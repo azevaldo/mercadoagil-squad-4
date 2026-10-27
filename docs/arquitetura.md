@@ -27,6 +27,12 @@ Essas consultas internas podem retornar entidades para outro serviço. Os servi�
 
 O estado salvo inclui cadastros, estoque, pedidos, cupons aplicados e os valores financeiros congelados na confirmação. Assim, reabrir o sistema não altera o histórico dos pedidos.
 
+O estado completo, incluindo CPF, fica restrito à comunicação interna com o banco. Os métodos públicos de consulta continuam devolvendo respostas sem CPF.
+
+Cada sessão mantém uma revisão dos dados. Antes de consultar ou alterar, ela carrega mudanças de outras sessões. A gravação confere a revisão dentro da transação; se outra sessão gravar durante a operação, a alteração é recusada, os dados são atualizados e o usuário pode tentar novamente. Se uma gravação falhar, o estado em memória é restaurado para não manter uma alteração que não foi confirmada.
+
+Pedidos confirmados ou cancelados preservam os dados de cliente, produtos e cupons que tinham quando foram encerrados, mesmo que os cadastros sejam alterados ou recriados depois.
+
 ## Regras e relatórios
 
 As regras de itens, cupons, cálculos e transições de status continuam em `Pedido`. A movimentação de estoque continua em `Estoque`, e as taxas permanecem em `config/regras.js`.
@@ -38,3 +44,5 @@ O seed continua sendo carregado pelas operações públicas, na ordem vendedores
 ## Testes
 
 Os testes existentes continuam usando a API pública de `Marketplace`. O arquivo `test/marketplaceIntegracao.test.js` cobre a comunicação entre os serviços, o estoque compartilhado, as consultas após mudanças nos cadastros, o isolamento entre instâncias e as falhas na carga inicial.
+
+`test/sqlite.test.js` e `test/consistenciaPersistencia.test.js` verificam a gravação, a recuperação em caso de falha e o uso por sessões simultâneas. `test/historicoPedidos.test.js` cobre a preservação dos dados dos pedidos encerrados.
