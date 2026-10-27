@@ -11,7 +11,7 @@ import {
 const areas = [
   {
     rotulo: 'Pedidos',
-    ids: [21, 28, 22, 23, 24, 25, 26, 27],
+    ids: [21, 28, 22, 23, 24, 25, 26, 27, 33],
     descricao: 'Da primeira compra ao repasse.',
     listar: 'listarPedidos',
     listaId: 28,

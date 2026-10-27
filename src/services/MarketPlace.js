@@ -76,11 +76,11 @@ export class Marketplace {
     return this.#clientes.buscarCliente(termo);
   }
 
- excluirCliente(cpf) {
-  return this.#clientes.excluirCliente(cpf, (cliente) =>
-    this.#pedidos.possuiPedidoAbertoDo(cliente),
-  );
-}
+  excluirCliente(cpf) {
+    return this.#clientes.excluirCliente(cpf, (cliente) =>
+      this.#pedidos.possuiPedidoAbertoDo(cliente),
+    );
+  }
 
   cadastrarVendedor(dados) {
     return this.#vendedores.cadastrarVendedor(dados);
@@ -146,7 +146,6 @@ export class Marketplace {
     );
   }
 
-
   criarPedido(cpf) {
     return this.#pedidos.criarPedido(cpf);
   }
@@ -178,9 +177,10 @@ export class Marketplace {
   aplicarCupom(pedidoId, codigo) {
     return this.#pedidos.aplicarCupom(pedidoId, codigo);
   }
+
   removerCupom(pedidoId, codigo) {
-  return this.#pedidos.removerCupom(pedidoId, codigo);
-}
+    return this.#pedidos.removerCupom(pedidoId, codigo);
+  }
 
   relatorioFinanceiro(filtros = {}) {
     return this.#relatorios.relatorioFinanceiro(filtros);

@@ -1,6 +1,6 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Marketplace } from '../src/services/Marketplace.js';
+import { Marketplace } from '../src/services/MarketPlace.js';
 import { dadosIniciais } from '../src/data/seed.js';
 
 const CPF_MARIA = '529.982.247-25';

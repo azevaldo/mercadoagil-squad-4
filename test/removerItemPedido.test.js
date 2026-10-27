@@ -171,22 +171,22 @@ describe('Marketplace: removerItem, pedido inexistente e id inválido', () => {
       erros: ['O id do pedido deve ser maior que zero.'],
     });
   });
-  
+
   test('remove o cupom aplicado e o total volta sem desconto', () => {
-  const pedido = pedidoCompleto();
+    const pedido = pedidoCompleto();
 
-  assert.equal(pedido.removerCupom('BEMVINDO10').ok, true);
-  assert.deepEqual(pedido.cupons, []);
-  // Subtotal 200, sem desconto, frete Nordeste 25 + 2 x 1,50 = 28: total 228
-  assert.equal(pedido.resumo().dados.total, 228);
-});
-
-test('remover cupom que não está no pedido retorna falha', () => {
-  const pedido = pedidoCompleto();
-
-  assert.deepEqual(pedido.removerCupom('PDA15'), {
-    ok: false,
-    erros: ['O cupom PDA15 não está no pedido 1.'],
+    assert.equal(pedido.removerCupom('BEMVINDO10').ok, true);
+    assert.deepEqual(pedido.cupons, []);
+    // Subtotal 200, sem desconto, frete Nordeste 25 + 2 x 1,50 = 28: total 228
+    assert.equal(pedido.resumo().dados.total, 228);
   });
-});
+
+  test('remover cupom que não está no pedido retorna falha', () => {
+    const pedido = pedidoCompleto();
+
+    assert.deepEqual(pedido.removerCupom('PDA15'), {
+      ok: false,
+      erros: ['O cupom PDA15 não está no pedido 1.'],
+    });
+  });
 });

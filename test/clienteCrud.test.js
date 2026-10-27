@@ -147,17 +147,14 @@ test('retorna erro ao tentar excluir cliente inexistente', () => {
   assert.equal(marketplace.listarClientes().dados.length, 1);
 });
 
-
-
-
-
-
 test('recusa CPF inválido antes de procurar o cliente', () => {
   const marketplace = criarMarketplace();
 
-  assert.deepEqual(marketplace.atualizarCliente('00000000000', { nome: 'Outro Cliente' }), {
-    ok: false,
-    erros: ['Informe um CPF válido, com dígitos verificadores.'],
-  });
+  assert.deepEqual(
+    marketplace.atualizarCliente('00000000000', { nome: 'Outro Cliente' }),
+    {
+      ok: false,
+      erros: ['Informe um CPF válido, com dígitos verificadores.'],
+    },
+  );
 });
-

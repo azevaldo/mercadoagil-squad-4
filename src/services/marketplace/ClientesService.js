@@ -9,16 +9,18 @@ import { validar } from '../../schemas/validar.js';
 
 const paraCliente = (cliente) => cliente.dadosPublicos();
 
-export class ClientesService  {
+export class ClientesService {
   #clientes = [];
 
   // Consulta interna para criar pedidos sem expor a entidade pelo Marketplace.
   encontrarPorCpf(cpf) {
-  const validado = validar(cpfSchema, { cpf });
-  if (!validado.ok) return undefined;
+    const validado = validar(cpfSchema, { cpf });
+    if (!validado.ok) return undefined;
 
-  return this.#clientes.find((cliente) => cliente.possuiCpf(validado.dados.cpf));
-}
+    return this.#clientes.find((cliente) =>
+      cliente.possuiCpf(validado.dados.cpf),
+    );
+  }
 
   cadastrarCliente(dados) {
     const validado = validar(clienteSchema, dados);
@@ -38,9 +40,8 @@ export class ClientesService  {
   }
 
   atualizarCliente(cpf, dados) {
-    const validadoCpf=validar(cpfSchema,{cpf});
-    if(!validadoCpf.ok) return validadoCpf;
-    
+    const validadoCpf = validar(cpfSchema, { cpf });
+    if (!validadoCpf.ok) return validadoCpf;
 
     const cliente = this.encontrarPorCpf(validadoCpf.dados.cpf);
     if (!cliente) return falha(['Cliente não encontrado.']);
@@ -81,20 +82,19 @@ export class ClientesService  {
     return sucesso(clientesEncontrados.map(paraCliente));
   }
 
-  excluirCliente(cpf,possuiPedidoAberto) {
-        const validadoCpf=validar(cpfSchema,{cpf});
-    if(!validadoCpf.ok) return validadoCpf;
-    
-    const cliente = this.encontrarPorCpf(validadoCpf.dados.cpf);
+  excluirCliente(cpf, possuiPedidoAberto) {
+    const validadoCpf = validar(cpfSchema, { cpf });
+    if (!validadoCpf.ok) return validadoCpf;
 
+    const cliente = this.encontrarPorCpf(validadoCpf.dados.cpf);
 
     if (!cliente) return falha(['Cliente não encontrado.']);
 
     if (possuiPedidoAberto(cliente)) {
-    return falha([
-      'Este cliente tem pedido aberto. Confirme ou cancele o pedido antes de excluir.',
-    ]);
-  }
+      return falha([
+        'Este cliente tem pedido aberto. Confirme ou cancele o pedido antes de excluir.',
+      ]);
+    }
 
     this.#clientes = this.#clientes.filter((atual) => atual !== cliente);
 

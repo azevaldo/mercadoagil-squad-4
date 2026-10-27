@@ -55,6 +55,14 @@ export class CuponsService {
   }
 
   atualizarCupom(codigo, novosDados) {
+    if (
+      !novosDados ||
+      typeof novosDados !== 'object' ||
+      Array.isArray(novosDados)
+    ) {
+      return falha(['Informe os dados válidos para atualizar o cupom.']);
+    }
+
     const codigoLimpo = String(codigo).trim().toUpperCase();
     const cupom = this.encontrarPorCodigo(codigoLimpo);
 
@@ -92,18 +100,21 @@ export class CuponsService {
     return sucesso(paraCupom(cupom));
   }
 
+  // Cupom aplicado a pedido aberto não sai do catálogo: a regra chega por função injetada
 
+  excluirCupom(codigo, possuiPedidoAberto = () => false) {
+    const codigoLimpo = String(codigo ?? '')
+      .trim()
+      .toUpperCase();
+    const indice = this.#cupons.findIndex(
+      (cupomAtual) => cupomAtual.codigo === codigoLimpo,
+    );
 
-   // Cupom aplicado a pedido aberto não sai do catálogo: a regra chega por função injetada
- 
-
-  excluirCupom(codigo,possuiPedidoAberto = () => false) {
-    const codigoLimpo = String(codigo).trim().toUpperCase();
-    const cupom = this.encontrarPorCodigo(codigoLimpo);
-
-     if (!cupom) {
+    if (indice < 0) {
       return falha(['Cupom não encontrado.']);
     }
+
+    const cupom = this.#cupons[indice];
 
     if (possuiPedidoAberto(cupom.codigo)) {
       return falha([
@@ -112,7 +123,7 @@ export class CuponsService {
     }
 
     this.#cupons = this.#cupons.filter(
-      (cupomAtual) => cupomAtual.codigo !== codigoLimpo,
+      (_, indiceAtual) => indiceAtual !== indice,
     );
 
     return sucesso({

@@ -150,5 +150,12 @@ export const criarAcoes = (mp, interfaceUsuario) => {
       'Top 3 produtos mais vendidos',
       async () => mostrar(mp.relatorioTopProdutos(await f.filtros())),
     ],
+    33: [
+      'Remover cupom do pedido',
+      async () => {
+        const pedido = await f.pedido(true);
+        return mostrar(mp.removerCupom(pedido, await f.codigo()));
+      },
+    ],
   };
 };

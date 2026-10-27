@@ -9,7 +9,7 @@ export class Cliente {
     this.#email = email;
     this.#cpf = cpf;
     this.#regiaoEntrega = regiaoEntrega;
-  } 
+  }
 
   get nome() {
     return this.#nome;
@@ -35,7 +35,7 @@ export class Cliente {
     this.#regiaoEntrega = regiaoEntrega;
   }
 
-   // LGPD: o CPF é removido com rest antes de sair da classe
+  // LGPD: o CPF é removido com rest antes de sair da classe
   dadosPublicos() {
     const { cpf, ...dadosSeguros } = {
       nome: this.#nome,

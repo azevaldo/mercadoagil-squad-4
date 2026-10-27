@@ -32,8 +32,8 @@ const validarCnpj = (cnpj) => {
 
   return digitos.endsWith(`${primeiroDigito}${segundoDigito}`);
 };
-export const cnpjSchema=z.object({
-cnpj: z
+export const cnpjSchema = z.object({
+  cnpj: z
     .string()
     .trim()
     .refine(validarCnpj, 'Informe um CNPJ válido, com dígitos verificadores.')

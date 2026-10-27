@@ -144,6 +144,10 @@ export const ajudaAcoes = {
     'Descubra os três produtos mais vendidos por quantidade.',
     'Considera apenas pedidos confirmados e os filtros informados.',
   ],
+  33: [
+    'Retire um cupom aplicado a um pedido em aberto.',
+    'Informe o pedido e o código do cupom. Isso libera a edição quando o subtotal deixou de cumprir o mínimo do cupom.',
+  ],
 };
 
 export const ajudaCampo = (rotulo) => {

@@ -1,9 +1,6 @@
 import { Pedido } from '../../models/Pedido.js';
 import { produtoIdSchema } from '../../schemas/produtoSchema.js';
-import {
-
-  cpfSchema,
-} from '../../schemas/clienteSchema.js';
+import { cpfSchema } from '../../schemas/clienteSchema.js';
 import {
   itemPedidoSchema,
   pedidoIdSchema,
@@ -58,9 +55,9 @@ export class PedidosService {
   }
 
   criarPedido(cpf) {
-    const validadoCpf=validar(cpfSchema,{cpf});
-    if(!validadoCpf.ok) return validadoCpf;
-    const cliente = this.#buscarCliente(cpf);
+    const validadoCpf = validar(cpfSchema, { cpf });
+    if (!validadoCpf.ok) return validadoCpf;
+    const cliente = this.#buscarCliente(validadoCpf.dados.cpf);
     if (!cliente) {
       return falha([
         'Cliente não encontrado. Cadastre o cliente antes de criar o pedido.',
@@ -77,12 +74,12 @@ export class PedidosService {
       status: pedido.status,
     });
   }
-// Consulta interna para exclusão: o cliente tem algum pedido aberto?
-possuiPedidoAbertoDo(cliente) {
-  return this.#pedidos.some(
-    (pedido) => pedido.status === 'aberto' && pedido.cliente === cliente,
-  );
-}
+  // Consulta interna para exclusão: o cliente tem algum pedido aberto?
+  possuiPedidoAbertoDo(cliente) {
+    return this.#pedidos.some(
+      (pedido) => pedido.status === 'aberto' && pedido.cliente === cliente,
+    );
+  }
   removerItem(pedidoId, produtoId) {
     const pedidoValidado = validar(pedidoIdSchema, { pedidoId });
     if (!pedidoValidado.ok) return pedidoValidado;
@@ -139,8 +136,8 @@ possuiPedidoAbertoDo(cliente) {
     });
   }
   removerCupom(pedidoId, codigo) {
-  return this.#comPedido(pedidoId, (pedido) => pedido.removerCupom(codigo));
-}
+    return this.#comPedido(pedidoId, (pedido) => pedido.removerCupom(codigo));
+  }
 
   possuiPedidoAbertoComProduto(produtoId) {
     return this.#pedidos.some(
@@ -156,7 +153,8 @@ possuiPedidoAbertoDo(cliente) {
         pedido.contemCupom(normalizarCodigo(codigo)),
     );
   }
-  
 }
 const normalizarCodigo = (codigo) =>
-  String(codigo ?? '').trim().toUpperCase();
+  String(codigo ?? '')
+    .trim()
+    .toUpperCase();
