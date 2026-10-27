@@ -2,18 +2,22 @@ import { Cliente } from '../../models/Cliente.js';
 import {
   atualizacaoClienteSchema,
   clienteSchema,
+  cpfSchema,
 } from '../../schemas/clienteSchema.js';
 import { sucesso, falha } from '../../utils/extra.js';
 import { validar } from '../../schemas/validar.js';
 
 const paraCliente = (cliente) => cliente.dadosPublicos();
 
-export class ClientesService {
+export class ClientesService  {
   #clientes = [];
 
   // Consulta interna para criar pedidos sem expor a entidade pelo Marketplace.
   encontrarPorCpf(cpf) {
-    const cpfNormalizado = String(cpf).replace(/\D/g, '');
+    const validado=validar(cpfSchema,cpf);
+    if(!validado.ok) return validado;
+
+    const cpfNormalizado = validado.dados.cpf;
     return this.#clientes.find((cliente) => cliente.possuiCpf(cpfNormalizado));
   }
 
@@ -35,7 +39,11 @@ export class ClientesService {
   }
 
   atualizarCliente(cpf, dados) {
-    const cliente = this.encontrarPorCpf(cpf);
+    const validadoCpf=validar(cpfSchema,cpf);
+    if(!validadoCpf.ok) return validadoCpf;
+    const cpfNormalizado=validadoCpf.dados.cpf;
+
+    const cliente = this.encontrarPorCpf(cpfNormalizado);
     if (!cliente) return falha(['Cliente não encontrado.']);
 
     const validado = validar(atualizacaoClienteSchema, dados);
@@ -74,11 +82,25 @@ export class ClientesService {
     return sucesso(clientesEncontrados.map(paraCliente));
   }
 
-  excluirCliente(cpf) {
-    const cliente = this.encontrarPorCpf(cpf);
+  excluirCliente(cpf,pedidos) {
+        const validadoCpf=validar(cpfSchema,cpf);
+    if(!validadoCpf.ok) return validadoCpf;
+    const cpfNormalizado=validadoCpf.dados.cpf;
+    const cliente = this.encontrarPorCpf(cpfNormalizado);
+
+
     if (!cliente) return falha(['Cliente não encontrado.']);
 
-    // TODO: impedir a exclusão quando houver pedidos associados ao cliente.
+    if (
+    pedidos.some(
+        (pedido) => pedido.status === 'aberto' && pedido.cliente === cliente,
+      )
+    ) {
+      return falha([
+        'Este cliente tem pedido aberto. Confirme ou cancele o pedido antes de excluir.',
+      ]);
+    }
+
     this.#clientes = this.#clientes.filter((atual) => atual !== cliente);
 
     return sucesso({ mensagem: 'Cliente excluído com sucesso.' });

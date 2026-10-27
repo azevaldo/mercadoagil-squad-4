@@ -77,7 +77,7 @@ export class Marketplace {
   }
 
   excluirCliente(cpf) {
-    return this.#clientes.excluirCliente(cpf);
+    return this.#clientes.excluirCliente(cpf,this.#pedidos);
   }
 
   cadastrarVendedor(dados) {

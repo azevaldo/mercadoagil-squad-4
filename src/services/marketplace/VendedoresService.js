@@ -1,7 +1,7 @@
 import { Vendedor } from '../../models/Vendedor.js';
 import {
   atualizacaoVendedorSchema,
-  vendedorSchema,
+  vendedorSchema,cnpjSchema,
 } from '../../schemas/vendedorSchema.js';
 import { sucesso, falha } from '../../utils/extra.js';
 import { validar } from '../../schemas/validar.js';
@@ -42,8 +42,12 @@ export class VendedoresService {
   }
 
   atualizarVendedor(cnpj, dados) {
-    const cnpjNormalizado = String(cnpj ?? '').replace(/\D/g, '');
-    const vendedor = this.encontrarPorCnpj(cnpjNormalizado);
+    
+    const cnpjValidar=validar(cnpjSchema,cnpj);
+    if(!cnpjValidar.ok) return cnpjValidar
+
+
+    const vendedor = this.encontrarPorCnpj(cnpjValidar.dados.cnpj);
 
     if (!vendedor) return falha(['Vendedor não encontrado.']);
 
@@ -82,8 +86,11 @@ export class VendedoresService {
   }
 
   excluirVendedor(cnpj) {
-    const cnpjNormalizado = String(cnpj ?? '').replace(/\D/g, '');
-    const vendedor = this.encontrarPorCnpj(cnpjNormalizado);
+    
+    const cnpjValidar=validar(cnpjSchema,cnpj);
+    if(!cnpjValidar.ok) return cnpjValidar
+
+    const vendedor = this.encontrarPorCnpj(cnpjValidar.dados.cnpj);
 
     if (!vendedor) return falha(['Vendedor não encontrado.']);
 
