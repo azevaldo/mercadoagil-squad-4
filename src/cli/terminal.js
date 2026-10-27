@@ -147,6 +147,8 @@ export const criarTerminal = () => {
   const fechar = () => {
     if (telaAberta) {
       stdout.write('\x1b[0m\x1b[?25h\x1b[?1049l');
+      stdin.pause();
+      stdin.unref?.();
       telaAberta = false;
     }
     leitor?.fechar();
