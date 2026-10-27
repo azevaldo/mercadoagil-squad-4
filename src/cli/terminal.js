@@ -36,6 +36,7 @@ const criarLeitorNaoInterativo = () => {
 };
 
 const lerLinha = async (rotulo) => {
+  const modoAnterior = stdin.isRaw;
   const rl = createInterface({ input: stdin, output: stdout });
   const abortar = new AbortController();
   rl.once('SIGINT', () => abortar.abort());
@@ -46,6 +47,8 @@ const lerLinha = async (rotulo) => {
     throw erro;
   } finally {
     rl.close();
+    if (stdin.isTTY && modoAnterior !== undefined)
+      stdin.setRawMode(modoAnterior);
   }
 };
 
@@ -55,6 +58,7 @@ export const criarTerminal = () => {
   );
   const leitor = interativo ? null : criarLeitorNaoInterativo();
   const cores = interativo && !process.env.NO_COLOR;
+  const modoAnterior = Boolean(stdin.isRaw);
   let telaAberta = false;
 
   const colorir = (texto, codigo) =>
@@ -71,6 +75,8 @@ export const criarTerminal = () => {
   };
 
   if (interativo) {
+    emitKeypressEvents(stdin);
+    stdin.setRawMode(true);
     stdout.write('\x1b[?1049h\x1b[?25l\x1b[2J\x1b[H');
     telaAberta = true;
   }
@@ -113,7 +119,6 @@ export const criarTerminal = () => {
       const terminar = (valor, erro = false) => {
         stdin.removeListener('keypress', tecla);
         stdin.removeListener('end', fim);
-        stdin.setRawMode(false);
         stdin.pause();
         if (erro) reject(valor);
         else resolve(valor);
@@ -130,8 +135,6 @@ export const criarTerminal = () => {
         desenhar();
       };
 
-      emitKeypressEvents(stdin);
-      stdin.setRawMode(true);
       stdin.on('keypress', tecla);
       stdin.once('end', fim);
       stdin.resume();
@@ -147,6 +150,7 @@ export const criarTerminal = () => {
   const fechar = () => {
     if (telaAberta) {
       stdout.write('\x1b[0m\x1b[?25h\x1b[?1049l');
+      stdin.setRawMode(modoAnterior);
       stdin.pause();
       stdin.unref?.();
       telaAberta = false;

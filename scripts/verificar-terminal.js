@@ -77,6 +77,12 @@ try {
     !conteudo().includes('Menu principal'),
     'O menu anterior deve sumir.',
   );
+  await tecla('\r', '› Listar clientes');
+  await tecla('\x1b[B', '› Cadastrar cliente');
+  await tecla('\r', 'Exemplo: Maria Santos');
+  await tecla('Teste Local\r', 'E-mail');
+  await tecla('/voltar\r', '› Listar clientes');
+  await tecla('\x1b', '› Clientes');
   await tecla('\x1b', '› Pedidos');
   await tecla('\x1b[B\x1b[B\x1b[B', '› Sair');
   await tecla('\r', 'Até já! MercadoÁgil encerrado.');
