@@ -9,9 +9,10 @@ try {
   const estadoSalvo = banco.carregarEstado();
   const mercado = new Marketplace(estadoSalvo ?? dadosIniciais, {
     aoAlterar: (estado) => banco.salvarEstado(estado),
+    recuperarEstado: () => banco.carregarEstado(),
+    persistirInicial: !estadoSalvo,
   });
 
-  if (!estadoSalvo) banco.salvarEstado(mercado.exportarEstado());
   mercado.avisos.forEach((aviso) => console.log(`! ${aviso}`));
 
   await iniciarMenu(mercado);

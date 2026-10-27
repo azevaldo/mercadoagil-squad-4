@@ -25,9 +25,34 @@ export class BancoSQLite {
   constructor(caminho = caminhoBanco) {
     this.#banco = new DatabaseSync(caminho);
     this.#banco.exec(readFileSync(caminhoSchema, 'utf8'));
+    this.#banco.exec('PRAGMA busy_timeout = 5000');
   }
 
   carregarEstado() {
+    this.#banco.exec('BEGIN');
+    try {
+      const revisao = this.#lerRevisao();
+      const estado = this.#lerEstado();
+      this.#banco.exec('COMMIT');
+      return estado ? { ...estado, revisao } : null;
+    } catch (erro) {
+      this.#banco.exec('ROLLBACK');
+      throw erro;
+    }
+  }
+
+  #lerRevisao() {
+    const registro = this.#banco
+      .prepare('SELECT valor FROM metadados WHERE chave = ?')
+      .get('revisao_estado');
+    const revisao = registro ? Number(registro.valor) : 0;
+    if (!Number.isSafeInteger(revisao) || revisao < 0) {
+      throw new Error('A revisão do banco local é inválida.');
+    }
+    return revisao;
+  }
+
+  #lerEstado() {
     const inicializado = this.#banco
       .prepare('SELECT valor FROM metadados WHERE chave = ?')
       .get('estado_inicializado');
@@ -147,6 +172,10 @@ export class BancoSQLite {
   }
 
   salvarEstado(estado) {
+    const revisaoEsperada = estado.revisao ?? 0;
+    if (!Number.isSafeInteger(revisaoEsperada) || revisaoEsperada < 0) {
+      throw new Error('A revisão informada para o banco é inválida.');
+    }
     const inserirCliente = this.#banco.prepare(
       'INSERT INTO clientes (cpf, nome, email, regiao_entrega) VALUES (?, ?, ?, ?)',
     );
@@ -182,6 +211,13 @@ export class BancoSQLite {
 
     this.#banco.exec('BEGIN IMMEDIATE');
     try {
+      const revisaoAtual = this.#lerRevisao();
+      if (revisaoAtual !== revisaoEsperada) {
+        const erro = new Error('Os dados foram alterados em outra sessão.');
+        erro.codigo = 'CONFLITO_PERSISTENCIA';
+        throw erro;
+      }
+
       this.#banco.exec(`
         DELETE FROM itens_pedido;
         DELETE FROM cupons_pedido;
@@ -258,7 +294,9 @@ export class BancoSQLite {
         'proximo_pedido_id',
         String(estado.sequencias.proximoPedidoId),
       );
+      salvarMetadado.run('revisao_estado', String(revisaoAtual + 1));
       this.#banco.exec('COMMIT');
+      return revisaoAtual + 1;
     } catch (erro) {
       this.#banco.exec('ROLLBACK');
       throw erro;

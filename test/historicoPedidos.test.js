@@ -60,10 +60,12 @@ test('pedido cancelado preserva os dados que tinha no encerramento', () => {
 test('pedido confirmado conserva o cliente original ao reabrir após recadastro', (t) => {
   const banco = new BancoSQLite(':memory:');
   t.after(() => banco.fechar());
+  assert.equal(banco.carregarEstado(), null);
   const marketplace = new Marketplace(dadosIniciais, {
     aoAlterar: (estado) => banco.salvarEstado(estado),
+    recuperarEstado: () => banco.carregarEstado(),
+    persistirInicial: true,
   });
-  banco.salvarEstado(marketplace.exportarEstado());
   confirmarPedido(marketplace);
 
   assert.equal(marketplace.excluirCliente('52998224725').ok, true);
@@ -84,4 +86,39 @@ test('pedido confirmado conserva o cliente original ao reabrir após recadastro'
   const restaurado = new Marketplace(banco.carregarEstado());
   assert.equal(restaurado.resumoPedido(1).dados.cliente, 'Maria Santos');
   assert.equal(restaurado.resumoPedido(1).dados.itens[0].produto, 'Mouse');
+});
+
+test('pedido aberto restaurado mantém os vínculos com cliente e produto', (t) => {
+  const banco = new BancoSQLite(':memory:');
+  t.after(() => banco.fechar());
+  assert.equal(banco.carregarEstado(), null);
+  const marketplace = new Marketplace(dadosIniciais, {
+    aoAlterar: (estado) => banco.salvarEstado(estado),
+    recuperarEstado: () => banco.carregarEstado(),
+    persistirInicial: true,
+  });
+
+  assert.equal(marketplace.criarPedido('52998224725').ok, true);
+  assert.equal(marketplace.adicionarItem(1, 1, 1).ok, true);
+  assert.equal(
+    marketplace.atualizarCliente('52998224725', {
+      nome: 'Maria Atualizada',
+      email: 'maria.atualizada@example.com',
+      regiaoEntrega: 'Sul',
+    }).ok,
+    true,
+  );
+  assert.equal(
+    marketplace.atualizarProduto(1, { nome: 'Mouse Atualizado' }).ok,
+    true,
+  );
+
+  const restaurado = new Marketplace(banco.carregarEstado());
+  assert.equal(restaurado.resumoPedido(1).dados.cliente, 'Maria Atualizada');
+  assert.equal(
+    restaurado.resumoPedido(1).dados.itens[0].produto,
+    'Mouse Atualizado',
+  );
+  assert.equal(restaurado.excluirCliente('52998224725').ok, false);
+  assert.equal(restaurado.excluirProduto(1).ok, false);
 });
