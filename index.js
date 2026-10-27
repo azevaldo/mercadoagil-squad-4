@@ -1,6 +1,6 @@
 import { Marketplace } from './src/services/MarketPlace.js';
 import { dadosIniciais } from './src/data/seed.js';
-import { iniciarMenu } from './src/cli/menu.js';
+import { iniciarMenu } from './src/cli/index.js';
 import { BancoSQLite } from './src/data/sqlite.js';
 
 const banco = new BancoSQLite();
