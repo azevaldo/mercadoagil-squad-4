@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Marketplace } from '../src/services/MarketPlace.js';
 import { dadosIniciais } from '../src/data/seed.js';
-import { criarFormularios } from '../src/cli/formularios.js';
+import { criarFormularios } from '../src/commands/formularios.js';
 
 const leitor = (respostas) => {
   const erros = [];
