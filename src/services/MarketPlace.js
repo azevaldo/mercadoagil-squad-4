@@ -76,9 +76,11 @@ export class Marketplace {
     return this.#clientes.buscarCliente(termo);
   }
 
-  excluirCliente(cpf) {
-    return this.#clientes.excluirCliente(cpf,this.#pedidos);
-  }
+ excluirCliente(cpf) {
+  return this.#clientes.excluirCliente(cpf, (cliente) =>
+    this.#pedidos.possuiPedidoAbertoDo(cliente),
+  );
+}
 
   cadastrarVendedor(dados) {
     return this.#vendedores.cadastrarVendedor(dados);

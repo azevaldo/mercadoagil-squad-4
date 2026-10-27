@@ -13,11 +13,9 @@ export class ClientesService  {
   #clientes = [];
 
   // Consulta interna para criar pedidos sem expor a entidade pelo Marketplace.
-  encontrarPorCpf(cpf) {
-    const validado=validar(cpfSchema,cpf);
-    if(!validado.ok) return validado;
+  encontrarPorCpf(cpfNormalizado) {
 
-    const cpfNormalizado = validado.dados.cpf;
+     
     return this.#clientes.find((cliente) => cliente.possuiCpf(cpfNormalizado));
   }
 
@@ -39,11 +37,11 @@ export class ClientesService  {
   }
 
   atualizarCliente(cpf, dados) {
-    const validadoCpf=validar(cpfSchema,cpf);
+    const validadoCpf=validar(cpfSchema,{cpf});
     if(!validadoCpf.ok) return validadoCpf;
-    const cpfNormalizado=validadoCpf.dados.cpf;
+    
 
-    const cliente = this.encontrarPorCpf(cpfNormalizado);
+    const cliente = this.encontrarPorCpf(validadoCpf.dados.cpf);
     if (!cliente) return falha(['Cliente não encontrado.']);
 
     const validado = validar(atualizacaoClienteSchema, dados);
@@ -82,24 +80,20 @@ export class ClientesService  {
     return sucesso(clientesEncontrados.map(paraCliente));
   }
 
-  excluirCliente(cpf,pedidos) {
-        const validadoCpf=validar(cpfSchema,cpf);
+  excluirCliente(cpf,possuiPedidoAberto) {
+        const validadoCpf=validar(cpfSchema,{cpf});
     if(!validadoCpf.ok) return validadoCpf;
-    const cpfNormalizado=validadoCpf.dados.cpf;
-    const cliente = this.encontrarPorCpf(cpfNormalizado);
+    
+    const cliente = this.encontrarPorCpf(validadoCpf.dados.cpf);
 
 
     if (!cliente) return falha(['Cliente não encontrado.']);
 
-    if (
-    pedidos.some(
-        (pedido) => pedido.status === 'aberto' && pedido.cliente === cliente,
-      )
-    ) {
-      return falha([
-        'Este cliente tem pedido aberto. Confirme ou cancele o pedido antes de excluir.',
-      ]);
-    }
+    if (possuiPedidoAberto(cliente)) {
+    return falha([
+      'Este cliente tem pedido aberto. Confirme ou cancele o pedido antes de excluir.',
+    ]);
+  }
 
     this.#clientes = this.#clientes.filter((atual) => atual !== cliente);
 

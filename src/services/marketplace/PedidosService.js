@@ -71,7 +71,12 @@ export class PedidosService {
       status: pedido.status,
     });
   }
-
+// Consulta interna para exclusão: o cliente tem algum pedido aberto?
+possuiPedidoAbertoDo(cliente) {
+  return this.#pedidos.some(
+    (pedido) => pedido.status === 'aberto' && pedido.cliente === cliente,
+  );
+}
   removerItem(pedidoId, produtoId) {
     const pedidoValidado = validar(pedidoIdSchema, { pedidoId });
     if (!pedidoValidado.ok) return pedidoValidado;

@@ -97,7 +97,7 @@ test('retorna erro ao atualizar vendedor inexistente', () => {
   const marketplace = criarMarketplace();
 
   assert.deepEqual(
-    marketplace.atualizarVendedor('00.000.000/0000-00', {
+    marketplace.atualizarVendedor('11.444.777/0001-61', {
       nomeLoja: 'Loja Nova',
       email: 'novo@loja.com',
     }),
@@ -131,8 +131,21 @@ test('exclui vendedor sem produtos', () => {
 test('retorna erro ao excluir vendedor inexistente', () => {
   const marketplace = criarMarketplace();
 
-  assert.deepEqual(marketplace.excluirVendedor('00.000.000/0000-00'), {
+  assert.deepEqual(marketplace.excluirVendedor('11.444.777/0001-61'), {
     ok: false,
     erros: ['Vendedor não encontrado.'],
   });
 });
+
+
+
+
+test('recusa CNPJ inválido antes de procurar o vendedor', () => {
+  const marketplace = criarMarketplace();
+
+  assert.deepEqual(marketplace.atualizarVendedor('00.000.000/0000-00', { nomeLoja: 'Loja Nova' }), {
+    ok: false,
+    erros: ['Informe um CNPJ válido, com dígitos verificadores.'],
+  });
+});
+

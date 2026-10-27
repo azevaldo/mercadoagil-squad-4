@@ -43,7 +43,7 @@ export class VendedoresService {
 
   atualizarVendedor(cnpj, dados) {
     
-    const cnpjValidar=validar(cnpjSchema,cnpj);
+    const cnpjValidar=validar(cnpjSchema,{cnpj});
     if(!cnpjValidar.ok) return cnpjValidar
 
 
@@ -87,7 +87,7 @@ export class VendedoresService {
 
   excluirVendedor(cnpj) {
     
-    const cnpjValidar=validar(cnpjSchema,cnpj);
+    const cnpjValidar=validar(cnpjSchema,{cnpj});
     if(!cnpjValidar.ok) return cnpjValidar
 
     const vendedor = this.encontrarPorCnpj(cnpjValidar.dados.cnpj);

@@ -65,15 +65,12 @@ test('retorna erro ao tentar atualizar cliente inexistente', () => {
   const marketplace = criarMarketplace();
 
   assert.deepEqual(
-    marketplace.atualizarCliente('00000000000', {
+    marketplace.atualizarCliente('111.444.777-35', {
       nome: 'Outro Cliente',
       email: 'outro@example.com',
       regiaoEntrega: 'Sudeste',
     }),
-    {
-      ok: false,
-      erros: ['Cliente não encontrado.'],
-    },
+    { ok: false, erros: ['Cliente não encontrado.'] },
   );
 });
 
@@ -143,9 +140,24 @@ test('exclui cliente existente usando CPF formatado', () => {
 test('retorna erro ao tentar excluir cliente inexistente', () => {
   const marketplace = criarMarketplace();
 
-  assert.deepEqual(marketplace.excluirCliente('00000000000'), {
+  assert.deepEqual(marketplace.excluirCliente('111.444.777-35'), {
     ok: false,
     erros: ['Cliente não encontrado.'],
   });
   assert.equal(marketplace.listarClientes().dados.length, 1);
 });
+
+
+
+
+
+
+test('recusa CPF inválido antes de procurar o cliente', () => {
+  const marketplace = criarMarketplace();
+
+  assert.deepEqual(marketplace.atualizarCliente('00000000000', { nome: 'Outro Cliente' }), {
+    ok: false,
+    erros: ['Informe um CPF válido, com dígitos verificadores.'],
+  });
+});
+
