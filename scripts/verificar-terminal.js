@@ -36,6 +36,8 @@ app.onData((dados) => {
     revisao += 1;
   });
 });
+// O console pode consultar o terminal antes de continuar a desenhar.
+tela.onData((dados) => app.write(dados));
 const conteudo = () =>
   Array.from(
     { length: tela.rows },
@@ -47,7 +49,14 @@ const conteudo = () =>
 const aguardar = async (texto, anterior = -1) => {
   const fim = Date.now() + 10000;
   while (Date.now() < fim) {
-    if (revisao > anterior && conteudo().includes(texto)) return;
+    if (revisao > anterior && conteudo().includes(texto)) {
+      const atual = revisao;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      if (revisao === atual && conteudo().includes(texto)) {
+        console.log(`OK: ${texto}`);
+        return;
+      }
+    }
     if (saida)
       throw new Error(`O aplicativo encerrou antes de mostrar ${texto}.`);
     await new Promise((resolve) => setTimeout(resolve, 25));
@@ -63,7 +72,7 @@ const tecla = async (valor, esperado) => {
 try {
   await aguardar('Menu principal');
   await tecla('\x1b[B', '› Cadastros');
-  await tecla('\r', 'Cadastros');
+  await tecla('\r', '› Clientes');
   assert.ok(
     !conteudo().includes('Menu principal'),
     'O menu anterior deve sumir.',
@@ -71,7 +80,17 @@ try {
   await tecla('\x1b', '› Pedidos');
   await tecla('\x1b[B\x1b[B\x1b[B', '› Sair');
   await tecla('\r', 'Até já! MercadoÁgil encerrado.');
-  const evento = await terminou;
+  let timer;
+  const evento = await Promise.race([
+    terminou,
+    new Promise((_, reject) => {
+      timer = setTimeout(
+        () =>
+          reject(new Error('O aplicativo não encerrou após escolher Sair.')),
+        10000,
+      );
+    }),
+  ]).finally(() => clearTimeout(timer));
   assert.equal(evento.exitCode, 0);
   assert.ok(registro.includes('\x1b[?1049h'));
   assert.ok(registro.includes('\x1b[?1049l'));
@@ -81,7 +100,15 @@ try {
   process.exitCode = 1;
 } finally {
   await writeFile(join(process.env.CLI_TEST_TOOLS, 'terminal.log'), registro);
-  if (!saida) app.kill();
+  if (!saida) {
+    if (process.platform === 'win32') {
+      try {
+        process.kill(app.pid);
+      } catch {
+        // O processo pode já ter encerrado.
+      }
+    } else app.kill();
+  }
   tela.dispose();
   if (process.platform === 'win32') process.exit(process.exitCode || 0);
 }
