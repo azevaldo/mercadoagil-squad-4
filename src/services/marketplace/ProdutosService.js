@@ -105,12 +105,23 @@ export class ProdutosService {
       : falha([`Produto não encontrado: ${texto}`]);
   }
 
-  excluirProduto(id) {
+   excluirProduto(id, possuiPedidoAberto = () => false) {
+    const produto = this.encontrarPorId(id);
+    if (!produto) return falha(['Produto não encontrado.']);
+
+    if (possuiPedidoAberto(produto.id)) return falha( [
+    'Este produto está em um pedido aberto. Remova-o do pedido antes de excluir.',]);
+
+    this.#produtos = this.#produtos.filter((p) => p !== produto);
+    this.#estoque.remover(produto.id);
+    return sucesso({ removido: produto.nome });
+  }
+  /*excluirProduto(id) {
     const produto = this.encontrarPorId(id);
     if (!produto) return falha(['Produto não encontrado.']);
 
     this.#produtos = this.#produtos.filter((p) => p !== produto);
     this.#estoque.remover(produto.id);
     return sucesso({ removido: produto.nome });
-  }
+  }*/
 }

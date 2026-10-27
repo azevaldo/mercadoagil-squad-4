@@ -1,6 +1,10 @@
 import { Pedido } from '../../models/Pedido.js';
 import { produtoIdSchema } from '../../schemas/produtoSchema.js';
 import {
+
+  cpfSchema,
+} from '../../schemas/clienteSchema.js';
+import {
   itemPedidoSchema,
   pedidoIdSchema,
 } from '../../schemas/itemPedidoSchema.js';
@@ -54,6 +58,8 @@ export class PedidosService {
   }
 
   criarPedido(cpf) {
+    const validadoCpf=validar(cpfSchema,{cpf});
+    if(!validadoCpf.ok) return validadoCpf;
     const cliente = this.#buscarCliente(cpf);
     if (!cliente) {
       return falha([
@@ -132,4 +138,25 @@ possuiPedidoAbertoDo(cliente) {
       return pedido.aplicarCupom(cupom);
     });
   }
+  removerCupom(pedidoId, codigo) {
+  return this.#comPedido(pedidoId, (pedido) => pedido.removerCupom(codigo));
 }
+
+  possuiPedidoAbertoComProduto(produtoId) {
+    return this.#pedidos.some(
+      (pedido) =>
+        pedido.status === 'aberto' && pedido.contemProduto(Number(produtoId)),
+    );
+  }
+
+  possuiPedidoAbertoComCupom(codigo) {
+    return this.#pedidos.some(
+      (pedido) =>
+        pedido.status === 'aberto' &&
+        pedido.contemCupom(normalizarCodigo(codigo)),
+    );
+  }
+  
+}
+const normalizarCodigo = (codigo) =>
+  String(codigo ?? '').trim().toUpperCase();

@@ -354,4 +354,15 @@ export class Pedido {
 
     return { subtotal, descontos, frete, tributos, total, comissao, repasses };
   }
+  removerCupom(codigo) {
+  const erroEdicao = this.#erroDeEdicao();
+  if (erroEdicao) return falha([erroEdicao]);
+
+  if (!this.contemCupom(codigo)) {
+    return falha([`O cupom ${codigo} não está no pedido ${this.#id}.`]);
+  }
+
+  this.#cupons = this.#cupons.filter((cupom) => cupom.codigo !== codigo);
+  return sucesso({ id: this.#id, cupons: this.#cupons.map((c) => c.codigo) });
+}
 }

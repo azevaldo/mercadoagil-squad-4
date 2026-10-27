@@ -92,12 +92,23 @@ export class CuponsService {
     return sucesso(paraCupom(cupom));
   }
 
-  excluirCupom(codigo) {
+
+
+   // Cupom aplicado a pedido aberto não sai do catálogo: a regra chega por função injetada
+ 
+
+  excluirCupom(codigo,possuiPedidoAberto = () => false) {
     const codigoLimpo = String(codigo).trim().toUpperCase();
     const cupom = this.encontrarPorCodigo(codigoLimpo);
 
-    if (!cupom) {
+     if (!cupom) {
       return falha(['Cupom não encontrado.']);
+    }
+
+    if (possuiPedidoAberto(cupom.codigo)) {
+      return falha([
+        'Este cupom está aplicado a um pedido aberto. Retire-o do pedido antes de excluir.',
+      ]);
     }
 
     this.#cupons = this.#cupons.filter(
