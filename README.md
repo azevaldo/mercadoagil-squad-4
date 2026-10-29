@@ -509,6 +509,7 @@ Mais detalhes em [CONTRIBUTING.md](CONTRIBUTING.md).
 | Azevaldo Caluaco |
 | Pedro Silva |
 | David Silva |
+| Irlan Cordeiro |
 
 Projeto final do Módulo 1 · entrega em 28/10/2026.
 
@@ -521,8 +522,6 @@ Feito com 💛💙 pelo SQUAD 4
 </div>
 
 
-## Contribuição
 
-Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para as orientações de desenvolvimento e contribuição. Os padrões técnicos do projeto estão em [docs/padroes-de-desenvolvimento.md](docs/padroes-de-desenvolvimento.md).
 
 A divisão das responsabilidades do Marketplace está descrita em [docs/arquitetura.md](docs/arquitetura.md).
